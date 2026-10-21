@@ -1,0 +1,35 @@
+{
+	"name": "Voicely HTTP speech example",
+	"nodes": [
+		{
+			"id": "start",
+			"name": "Start",
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [0, 0],
+			"parameters": {}
+		},
+		{
+			"id": "speech",
+			"name": "Voicely",
+			"type": "@voicelystudio/n8n-nodes-voicely.voicely",
+			"typeVersion": 1,
+			"position": [300, 0],
+			"parameters": {
+				"resource": "speech",
+				"operation": "generate",
+				"text": "Hello from Voicely. This workflow returns a complete audio file for the next node.",
+				"voiceId": "vly_f08",
+				"modelId": "",
+				"languageCode": "en",
+				"outputFormat": "mp3_44100_128",
+				"binaryProperty": "audio",
+				"itemConcurrency": 1,
+				"options": {}
+			}
+		}
+	],
+	"connections": { "Start": { "main": [[{ "node": "Voicely", "type": "main", "index": 0 }]] } },
+	"settings": { "executionOrder": "v1" },
+	"active": false
+}

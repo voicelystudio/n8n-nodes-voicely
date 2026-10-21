@@ -1,0 +1,49 @@
+# GitHub-hosted staging with npm provenance. No local/automatic API deployment.
+# First release: use a short-lived, scope-restricted, stage-only NPM_TOKEN secret.
+# Leave Bypass 2FA off. The owner reviews and approves the stage on npm with 2FA.
+# A first stage creates npm's public 0.0.0-stage placeholder, not the release payload.
+# Afterwards configure stage-only OIDC for this repository and publish.yml,
+# then revoke the temporary bootstrap token. This job never approves a stage.
+name: Publish
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up tested Node.js runtime and public registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+      - name: Check tag matches package version
+        run: node -e 'if (process.env.GITHUB_REF_NAME !== require("./package.json").version) throw new Error("Release tag must equal package version")'
+      - name: Use a staging-capable npm CLI on the isolated runner
+        run: npm install --global npm@11.15.0 --ignore-scripts --no-audit --no-fund
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Lint
+        run: npm run lint
+      - name: Build and test before publication
+        run: npm test
+      - name: Stage with provenance for owner review and 2FA approval
+        run: npm stage publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RELEASE_MODE: 'true'

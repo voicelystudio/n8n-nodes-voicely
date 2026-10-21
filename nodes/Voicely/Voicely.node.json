@@ -1,0 +1,12 @@
+{
+	"node": "@voicelystudio/n8n-nodes-voicely.voicely",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Communication"],
+	"resources": {
+		"credentialDocumentation": [
+			{ "url": "https://github.com/voicelystudio/n8n-nodes-voicely#credentials" }
+		],
+		"primaryDocumentation": [{ "url": "https://tryvoicely.com/developers/api" }]
+	}
+}
