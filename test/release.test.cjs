@@ -5,11 +5,29 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.join(__dirname, '..');
 
-test('binary node has no AI-tool opt-in or disabled verification rule', () => {
+test('node enables native AI-tool use without disabling a verification rule', () => {
 	const { Voicely } = require('../dist/nodes/Voicely/Voicely.node');
-	assert.equal(Boolean(new Voicely().description.usableAsTool), false);
+	assert.equal(new Voicely().description.usableAsTool, true);
 	const source = fs.readFileSync(path.join(root, 'nodes/Voicely/Voicely.node.ts'), 'utf8');
 	assert.doesNotMatch(source, /eslint-disable/);
+});
+
+test('AI example wires the native voice tool to an agent and separate model without secrets', () => {
+	const workflow = JSON.parse(fs.readFileSync(path.join(root, 'examples/ai-agent-voices.json'), 'utf8'));
+	const tool = workflow.nodes.find((node) => node.name === 'Voicely Voices');
+	const agent = workflow.nodes.find((node) => node.name === 'AI Agent');
+	const model = workflow.nodes.find((node) => node.name === 'Chat Model');
+	assert.equal(workflow.active, false);
+	assert.equal(tool.type, require('../package.json').name + '.voicelyTool');
+	assert.equal(tool.parameters.resource, 'voice');
+	assert.equal(tool.parameters.operation, 'getMany');
+	assert.equal(tool.retryOnFail, false);
+	assert.equal(workflow.connections.Start.main[0][0].node, agent.name);
+	assert.equal(workflow.connections[tool.name].ai_tool[0][0].node, agent.name);
+	assert.equal(workflow.connections[model.name].ai_languageModel[0][0].node, agent.name);
+	for (const node of workflow.nodes) assert.equal(node.credentials, undefined);
+	assert.doesNotMatch(JSON.stringify(workflow), /apiKey|vly_live_|127\.0\.0\.1|n8n-dev\.tryvoicely/);
+	assert.equal(require('../package.json').version, require('../package-lock.json').version);
 });
 
 test('public example workflows are inactive, credential-free and match compiled node parameters', () => {

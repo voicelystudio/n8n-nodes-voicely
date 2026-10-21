@@ -14,8 +14,7 @@ import { websocketRequest } from './websocket';
 
 export class Voicely implements INodeType {
 	description: INodeTypeDescription = {
-		// Explicitly no AI-tool opt-in: this action returns binary audio.
-		usableAsTool: undefined,
+		usableAsTool: true,
 		displayName: 'Voicely',
 		name: 'voicely',
 		icon: { light: 'file:voicely.svg', dark: 'file:voicely.svg' },

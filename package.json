@@ -1,6 +1,6 @@
 {
 	"name": "@voicelystudio/n8n-nodes-voicely",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Voicely text-to-speech integration for n8n workflows",
 	"license": "MIT",
 	"homepage": "https://tryvoicely.com/text-to-speech-api",

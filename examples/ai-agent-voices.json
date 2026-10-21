@@ -1,0 +1,41 @@
+{
+	"name": "Voicely voice discovery with an AI Agent",
+	"nodes": [
+		{
+			"id": "start", "name": "Start", "type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1, "position": [0, 0], "parameters": {}
+		},
+		{
+			"id": "agent", "name": "AI Agent", "type": "@n8n/n8n-nodes-langchain.agent",
+			"typeVersion": 3.1, "position": [300, 0],
+			"parameters": {
+				"promptType": "define",
+				"text": "Use the Voicely Voices tool to get the available voices. List their names and IDs from the result.",
+				"options": { "enableStreaming": false }
+			}
+		},
+		{
+			"id": "model", "name": "Chat Model", "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+			"typeVersion": 1.3, "position": [220, 240],
+			"parameters": {
+				"model": { "__rl": true, "mode": "id", "value": "gpt-4.1-mini" },
+				"responsesApiEnabled": false, "options": {}
+			}
+		},
+		{
+			"id": "voices", "name": "Voicely Voices", "type": "@voicelystudio/n8n-nodes-voicely.voicelyTool",
+			"typeVersion": 1, "position": [460, 240], "retryOnFail": false,
+			"parameters": {
+				"resource": "voice", "operation": "getMany", "itemConcurrency": 1,
+				"options": {}, "descriptionType": "manual",
+				"toolDescription": "Get the available Voicely voice names and IDs from the current catalog."
+			}
+		}
+	],
+	"connections": {
+		"Start": { "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]] },
+		"Chat Model": { "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]] },
+		"Voicely Voices": { "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]] }
+	},
+	"settings": { "executionOrder": "v1" }, "active": false
+}

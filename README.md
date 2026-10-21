@@ -63,6 +63,8 @@ Missing billing metadata is omitted rather than invented. n8n owns binary storag
 
 Voicely alone handles charging and credits. This node does not check balances before every request.
 No automatic retry is performed by the node. n8n Retry On Fail is a separate workflow setting.
+The n8n host's authentication helper may re-authenticate and repeat an HTTP request after a 401;
+this is separate from the node's behavior. Correct invalid credentials before rerunning a workflow.
 For HTTP Generate, an automatic idempotency key is stable for the same execution/node/run/item; a new workflow execution gets
 a new key. Supply a stable business-job key expression if retries must survive whole-workflow reruns.
 Do not use one constant business key for different texts. An uncertain response is not permission to charge again.
@@ -100,14 +102,30 @@ made. Completed upstream segments may already be charged when a later segment fa
 n8n Retry On Fail for uncertain WS sessions. Switching from HTTP is an explicit operation choice,
 not a promise of lower workflow completion time or true realtime workflow execution.
 
+## AI Agent tool
+
+Connect **Voicely** to an n8n **AI Agent** through its Tool connector. Select **Voice → Get Many**
+and attach your existing Voicely API credential. The agent receives actual voice IDs and names
+as JSON and can use them in its answer. This action does not generate audio or spend TTS credits.
+
+Import the [AI Agent voice example](https://github.com/voicelystudio/n8n-nodes-voicely/blob/main/examples/ai-agent-voices.json) for a ready-wired example.
+Configure the Voicely credential and a separate chat-model credential, then execute the workflow.
+The example uses n8n's OpenAI Chat Model; a compatible tool-calling model connected to the agent
+can be used instead. Model access and any model charges are separate from Voicely.
+
+This does not add an LLM or speech-to-text service to Voicely. AI tools consume JSON, not a playable
+audio response. For speech generation with binary output, use the existing HTTP or WebSocket action
+in the main workflow and pass its binary file to the next node. Do not rely on the AI Agent to play
+or forward generated audio. No billing, polling, dependency or operational limit is added by tool support.
+
 ## Development
 
 Generated with the official n8n programmatic scaffold.
 `npm run build`, `npm run lint`, and `npm test` are local package checks, not Next/SaaS builds.
 Use `npm run dev` for an isolated development n8n instance. Real generation uses your API credits.
 
-The binary-output node explicitly leaves `usableAsTool` undefined, so n8n does not offer it as
-an AI-agent tool. No verification lint rule is disabled. The installed types do not accept false.
+The node opts into n8n's native tool wrapper with `usableAsTool: true`. The documented agent example
+uses Voice → Get Many, which returns JSON. No verification lint rule is disabled.
 Install development tooling with `npm ci --ignore-scripts`: a transitive lint dependency's
 package-manager enforcement lifecycle fails under npm. Explicit build, lint and test still run.
 The installed CLI can launch a local n8n npm subprocess or use an external instance. Docker is
