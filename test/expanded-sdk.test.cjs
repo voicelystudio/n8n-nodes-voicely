@@ -1,0 +1,4 @@
+const test=require('node:test'),assert=require('node:assert/strict'),path=require('node:path'),ts=require('typescript');
+test('private action/Trigger/credential source conforms to the installed n8n SDK without emitting build files',()=>{
+ const file=path.join(__dirname,'../tsconfig.json'),read=ts.readConfigFile(file,ts.sys.readFile);assert.equal(read.error,undefined);const parsed=ts.parseJsonConfigFileContent(read.config,ts.sys,path.dirname(file));assert.equal(parsed.errors.length,0);const program=ts.createProgram(parsed.fileNames,{...parsed.options,noEmit:true,incremental:false});const errors=ts.getPreEmitDiagnostics(program).filter(d=>d.category===ts.DiagnosticCategory.Error);assert.deepEqual(errors.map(d=>({file:d.file?.fileName,message:ts.flattenDiagnosticMessageText(d.messageText,' ')})),[]);
+});

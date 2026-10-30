@@ -1,0 +1,47 @@
+{
+  "description": "Synthetic orders only. Create these typed columns in your own n8n Data Table; its row id and timestamps are automatic.",
+  "columns": [
+    {
+      "name": "order_id",
+      "type": "string"
+    },
+    {
+      "name": "order_status",
+      "type": "string"
+    },
+    {
+      "name": "failed_attempts",
+      "type": "number"
+    },
+    {
+      "name": "locked",
+      "type": "boolean"
+    },
+    {
+      "name": "verification_history",
+      "type": "string"
+    },
+    {
+      "name": "verification_last4",
+      "type": "string"
+    }
+  ],
+  "rows": [
+    {
+      "order_id": "DEMO-1010",
+      "order_status": "pending_verification",
+      "failed_attempts": 0,
+      "locked": false,
+      "verification_history": "[]",
+      "verification_last4": "1122"
+    },
+    {
+      "order_id": "DEMO-2020",
+      "order_status": "pending_verification",
+      "failed_attempts": 0,
+      "locked": false,
+      "verification_history": "[]",
+      "verification_last4": "1212"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'"><title>Voicely workflow converter</title><style>
+:root{font-family:system-ui,sans-serif;color:#162636;background:#f2f5f7}body{margin:0;padding:32px 20px}main{max-width:840px;margin:auto;background:white;border-radius:16px;padding:28px}h1{margin-top:0}p{line-height:1.6}label{display:grid;gap:8px;margin:18px 0}input,select,button{font:inherit;padding:12px;border:1px solid #abc;border-radius:8px}button{cursor:pointer;background:#123f53;color:white;margin:6px 8px 6px 0}button:disabled{opacity:.45;cursor:default}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f2f5f7;padding:16px}small{display:block;line-height:1.5;color:#475b67}#status{font-weight:600}
+</style><script type="module" src="./page.mjs"></script></head><body><main>
+<h1>Move your workflow to Voicely</h1><p>Select an exported workflow, map its voices and models once, then download a new inactive copy. Your file stays in this browser tab. This tool does not ask for an API key.</p>
+<label>1. Open your workflow JSON<input id="workflow" type="file" accept="application/json,.json"></label>
+<label>2. Choose the node family to convert<select id="source" aria-label="Source node family"></select></label>
+<div id="mappings"></div><small>Choose the actual Voicely IDs you intend to use. A different service's voice ID does not transfer its sound or an existing custom voice. Create your authorized voice in Voicely first. Dynamic selections require mappings configured on your own Voicely account. They are never guessed.</small>
+<label><span><input id="runtimeAliases" type="checkbox"> I have configured the dynamic voice/model mappings on my Voicely account.</span></label>
+<button id="convert" type="button">3. Review conversion</button><button id="download" type="button" disabled>Download inactive workflow</button><button id="clear" type="button">Clear this page</button>
+<p id="status" role="status">Your original workflow remains unchanged.</p><pre id="report" aria-label="Compatibility report"></pre>
+<p>Install the Voicely suite and create its credential inside n8n. After importing, bind that credential, provide any required consent recording and run the intended test before activation. Review embedded custom code and linked sub-workflows separately. This is not a universal secret scrub.</p>
+</main></body></html>

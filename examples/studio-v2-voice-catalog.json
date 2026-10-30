@@ -1,0 +1,51 @@
+{
+  "name": "Voicely Studio v2 - voice catalog",
+  "active": false,
+  "nodes": [
+    {
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "catalog",
+      "name": "Voicely Studio",
+      "type": "@voicelystudio/n8n-nodes-voicely.voicely",
+      "typeVersion": 2,
+      "position": [
+        300,
+        0
+      ],
+      "parameters": {
+        "resource": "voice",
+        "operation": "getAll",
+        "returnAll": true,
+        "pageSize": 50,
+        "simplify": true,
+        "requestTimeoutMs": 0
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Voicely Studio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

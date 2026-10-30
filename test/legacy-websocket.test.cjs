@@ -2,8 +2,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const { Voicely } = require('../dist/nodes/Voicely/Voicely.node');
-const { wsDeadline } = require('../dist/nodes/Voicely/websocket');
+const { Voicely: VersionedVoicely } = require('../dist/nodes/Voicely/Voicely.node');
+const Voicely = class { constructor() { return new VersionedVoicely().getNodeType(1); } };
+const { wsDeadline } = require('../dist/nodes/Voicely/v1/websocket');
 const AUDIO = Buffer.from('fake-audio-not-a-provider');
 const SECRET = 'fake_ws_secret';
 
@@ -378,7 +379,7 @@ test('a platform buffer allocation failure rejects safely rather than escaping t
 });
 
 test('WS runtime has no DB, environment, filesystem, polling, external library or audio JSON output', () => {
-	const source = fs.readFileSync(require.resolve('../dist/nodes/Voicely/websocket'), 'utf8');
+	const source = fs.readFileSync(require.resolve('../dist/nodes/Voicely/v1/websocket'), 'utf8');
 	assert.doesNotMatch(
 		source,
 		/process\.env|require\(['"](?:node:)?(?:fs|ws|undici)['"]\)|better-sqlite3|sqlite|spendV2|auditV2|setInterval|\/v1\/user/,

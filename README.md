@@ -1,138 +1,85 @@
-# Voicely for n8n
+# Voicely Studio and Agents for n8n
 
-Voicely-maintained text-to-speech integration for n8n workflows, with HTTP and WebSocket operations.
+Create speech, transcribe recordings, convert voices, and connect Voicely Calling Agents to business workflows.
+
+`@voicelystudio/n8n-nodes-voicely` contains three node types in one package:
+
+| Node | What it does |
+| --- | --- |
+| **Voicely Studio** | Text-to-speech over HTTP or WebSocket, speech-to-text, speech-to-speech, voice catalog and consented voice-profile management. Audio output is binary data for downstream nodes. |
+| **Voicely Agents** | Discover agents, retrieve completed calls and permitted shared details, register business tools, and inspect or redeliver automation events. |
+| **Voicely Agents Trigger** | Receive authenticated, signed completed-call events for post-call workflows. |
+
+[Voicely integration guide](https://tryvoicely.com/integrations/n8n) · [Account and API access](https://tryvoicely.com/api-access)
+
+## Installation and upgrades
+
+For a self-hosted n8n instance, install `@voicelystudio/n8n-nodes-voicely` from **Settings → Community nodes**, following your administrator's package policy. n8n Cloud availability follows n8n's review and release process. Version 0.1.1 was verified; its status does not automatically certify the expanded 0.2.0 features.
+
+Version 0.2.0 retains the original `voicely` node identity. Saved node version 1 workflows keep their original operations, **Voicely API** credentials and service URLs. Fresh Studio nodes use node version 2. Package version 0.2.0 and Studio node version 2 are different version numbers. Updating the package does not convert workflows, move credentials between hosts or transfer balances.
 
 ## Credentials
 
-Create a Voicely API key and fund its API wallet using Voicely's existing account controls.
-In n8n create a **Voicely API** credential. Its password field stores the key.
-The Service URL defaults to `https://n8n.tryvoicely.com`; staging is `https://n8n-dev.tryvoicely.com`.
-Do not send a real key to an unverified destination.
-Credential testing only reads `/v1/user`; it never generates or charges for audio.
-The configured service receives your key: only use a destination you trust. Redirects are disabled.
+Sign in to [Voicely API access](https://tryvoicely.com/api-access), create an API key, and enable only the permissions your workflow needs. Configure the service URL explicitly; this destination receives your key.
 
-## Initial operations
+| Credential | Service URL | Use |
+| --- | --- | --- |
+| **Voicely Studio API** | `https://n8n-suite.tryvoicely.com` | Studio node version 2 |
+| **Voicely Agents API** | `https://n8n-suite.tryvoicely.com` | Agents and Agents Trigger |
+| **Voicely API** | `https://n8n.tryvoicely.com` | Existing node version 1 workflows |
 
-- Speech / Generate: text, discovered voice/model, language and output format to audio in `binary.audio`.
-- Speech / Generate via WebSocket: receive WS audio chunks, validate final completion, then return
-  one complete file in the same binary field. Requires native server-side WebSocket (Node.js 22+).
-- Voice / Get Many: the complete voice catalog, one output item per voice.
+Staging accounts and keys belong to their staging service; do not mix environments. Existing speech keys do not automatically gain agent, tool or automation permissions.
 
-## Install and try
+Common permissions are `credential/read` for the Studio credential test, `voices/read` and `catalog/read` for discovery, `speech/synthesize`, `speech/transcribe` or `speech/convert` for the matching speech operation, and `voices/write` for owned-profile creation/deletion. Agents discovery uses `agents/read`; completed calls use `calls/read`; subscriptions and delivery management use `automation/read` and `automation/write`; tool management uses `tools/read` and `tools/write`. Additional shared-call details require their matching scopes and recorded sharing permission.
 
-Self-hosted n8n administrators can install a published release of
-`@voicelystudio/n8n-nodes-voicely` from **Settings > Community nodes > Install**.
-n8n Cloud availability requires n8n verification. npm publication alone does not enable Cloud installation.
-Use a current n8n runtime with Node.js 22 or newer for the WebSocket operation.
+For **Voicely Agents API**, set a strong random **Webhook Signing Secret** privately in the credential. Optional previous secrets support rotation. Keep API keys and webhook secrets out of exported workflow JSON, screenshots and recordings. Tool-webhook signing credentials serve a separate purpose from the API key used to manage tools.
 
-Import [HTTP speech](https://github.com/voicelystudio/n8n-nodes-voicely/blob/main/examples/http-speech.json) or
-[WebSocket speech](https://github.com/voicelystudio/n8n-nodes-voicely/blob/main/examples/websocket-speech.json) into n8n. Select your Voicely API credential
-in the Voicely node, choose an available voice from the list, and press **Execute workflow**.
-The examples contain no API key or stored execution data and do not start automatically.
-The output's **Binary** tab contains `audio`, ready for another node that accepts binary input.
-The examples are in the public repository, not the minimal npm runtime payload.
+## Speech workflows
 
-An API wallet funds generation. A successful credential test does not prove credit availability.
-HTTP and WS are paid API operations; there is no special n8n billing plan or second charge.
-For failures, inspect the returned status/code and your workflow settings before retrying.
-Keep Retry On Fail disabled for WebSocket because a partly completed session can already be billed.
+Start with the inactive, credential-free [Studio voice catalog example](examples/studio-v2-voice-catalog.json). Import it, select your Studio credential and execute it to list voices without generating audio.
 
-## Support
+For TTS, select a voice/model, enter text and choose an output binary field. For STT or STS, provide audio in the configured input binary field. Connect generated audio to playback, storage or delivery nodes. Consented voice creation takes the reference audio, consent recording and profile name; reuse the resulting owned profile ID for later operations rather than creating it for every request.
 
-Report reproducible integration bugs in
-[GitHub Issues](https://github.com/voicelystudio/n8n-nodes-voicely/issues), including the n8n version,
-operation, safe error code and request ID when available. Never post keys, audio or private text.
-Account or billing questions: [administrator@tryvoicely.com](mailto:administrator@tryvoicely.com).
+STS presets separate voice identity from conversion settings:
 
-The text is never silently clipped or split. No local character, rate, daily or spending cap is imposed.
-Item Concurrency is configurable, defaults to one, and has no coded upper ceiling.
-Request Timeout is configurable in node Options; zero disables it, with no coded upper ceiling.
-Voicely's API and the n8n host/workflow keep their own configured limits. Runtime node settings must use
-n8n Parameters/Credentials, not direct env/filesystem access. Dedicated backend settings use server env.
+- **Voicely-Expressive:** default tested expressive preset.
+- **Voicely-Normal:** tested normal preset.
+- **Custom:** select a supported model and style strength from 0 to 1. Blank settings use the service-configured defaults. Expressions can choose supported models/settings per item.
 
-Programmatic style is used to coordinate configurable in-flight items, stable per-item retry keys,
-safe binary/error handling and item linkage, rather than only declarative one-request routing.
-There are no external runtime dependencies, direct database calls, filesystem/env access or hidden retry loops.
+Fixed presets reject incompatible overrides. Catalog availability, pricing, concurrency and deadlines come from the service. CPU conversion can take longer than the audio duration; choose a suitable workflow timeout. The connector does not grant credits. The generous n8n builder campaign is not active as part of this release.
 
-MP3 returns `.mp3`; raw PCM returns `.pcm`; mu-law returns `.ulaw`. Raw audio is not mislabeled as WAV.
-Language can be left to API detection; set it explicitly when needed. Roman Urdu requires `ur`.
-Only applied API controls are exposed: no ineffective style/speed knobs or timestamp promises.
-Missing billing metadata is omitted rather than invented. n8n owns binary storage.
+Existing [HTTP speech](examples/http-speech.json), [WebSocket speech](examples/websocket-speech.json) and [AI voice-tool](examples/ai-agent-voices.json) examples continue to target node version 1. Their credentials remain separate from Studio version 2.
 
-## Retries and billing
+## Calling Agent business tools
 
-Voicely alone handles charging and credits. This node does not check balances before every request.
-No automatic retry is performed by the node. n8n Retry On Fail is a separate workflow setting.
-The n8n host's authentication helper may re-authenticate and repeat an HTTP request after a 401;
-this is separate from the node's behavior. Correct invalid credentials before rerunning a workflow.
-For HTTP Generate, an automatic idempotency key is stable for the same execution/node/run/item; a new workflow execution gets
-a new key. Supply a stable business-job key expression if retries must survive whole-workflow reruns.
-Do not use one constant business key for different texts. An uncertain response is not permission to charge again.
-In parallel mode, already-submitted items may complete and be charged even if another item fails.
-Continue On Fail returns a linked error item, not empty audio pretending to be success.
-n8n execution history can retain submitted text and audio; configure its retention appropriately.
+Use the [Calling order lookup and verification example](examples/calling-order-verification/README.md) for a complete 17-node workflow and synthetic setup data. It uses standard n8n nodes and is invoked by a Voicely Calling Agent; it is not a combined canvas of the three custom Voicely nodes. Importing it does not provision an agent, initiate a call or allocate credits.
 
-## WebSocket behavior
+Register typed tools through **Voicely Agents → Tool** with input/result schemas and the workflow's public HTTPS webhook. Configure the matching signing credential inside that workflow. Read-only lookups, confirmed writes, verified-caller access and escalation notifications have distinct contracts. The live agent receives the authoritative structured result after the business workflow completes. A webhook HTTP acceptance alone does not prove a CRM or database action completed.
 
-Select **Speech > Generate via WebSocket** and use the same trusted Service URL, credential,
-discovered voice/model, text, language, output format and binary field. Clear any HTTP Idempotency
-Key option. The node changes the configured origin to `wss:` (`ws:` for local HTTP fixtures) and uses
-`/v1/text-to-speech/<voice>/stream-input`. The API key travels only in the required first JSON frame,
-never a query parameter. HTTP credential/discovery requests remain HTTP.
+Publish/activate the business workflow for its persistent production webhook URL. Keep the examples inactive until you have selected your own credentials, table and tool configuration. Use synthetic data for initial tests.
 
-The operation uses the host's native WebSocket, no external runtime dependency. A host without it
-fails clearly before submission; HTTP Generate remains available. The dedicated service must have
-its separately configured WS upstream and upgrade routing activated.
+## Completed-call Trigger
 
-This is WebSocket transport into a normal n8n action, not live chunk delivery between downstream
-workflow nodes. The action collects decoded chunks, joins them once at completion, releases them,
-and gives the complete file to n8n binary storage. Concurrent long audio consumes proportional
-memory; choose Item Concurrency accordingly. The private relay pipes raw bytes with backpressure
-and does not decode, copy audio into JSON, transcode or access the database.
+1. Add **Voicely Agents Trigger**, select your Agents credential and choose an agent.
+2. Ensure n8n generates a **public HTTPS callback URL**. A localhost editor tunnel alone is not a reachable callback.
+3. For a manual test, select **Listen for test event**, then complete a call for that same agent and environment. The test listener is temporary and can stop after one accepted event.
+4. For persistent post-call automation, publish/activate the Trigger workflow and use its production webhook lifecycle.
+5. Inspect the output JSON, including `event_type`, `event_id` and the call details inside `data`.
 
-The returned JSON includes `transport`, `audioFrames`, `firstAudioMs`, `totalMs`, `outputFormat`
-and `bytes`, not audio/base64 or invented session IDs/charges/balance. Timings are measured from
-connection start in this client. The standard WebSocket does not expose upgrade response headers.
-Partial/corrupt/error streams or abnormal closure fail without returning partial audio as success.
-Request Timeout covers the entire session; workflow cancellation closes its socket and clears its
-deadline. There are no node-authored frame, byte, text, batch or session-duration ceilings.
+The Trigger manages its subscription automatically. Normal use does not require copying a subscription ID. Self-hosted reverse proxies must forward the generated POST callback paths to n8n, preserving headers and raw request bytes. They must not be limited to an old node UUID. Depending on your n8n version, configure `N8N_WEBHOOK_URL` or `WEBHOOK_URL` as appropriate; verify the actual test and production URLs shown in your editor. Exposing callback paths does not require exposing the editor or REST API.
 
-WS does **not** provide HTTP idempotent replay. No automatic retry, reconnect or HTTP fallback is
-made. Completed upstream segments may already be charged when a later segment fails. Do not enable
-n8n Retry On Fail for uncertain WS sessions. Switching from HTTP is an explicit operation choice,
-not a promise of lower workflow completion time or true realtime workflow execution.
+Events are HMAC signed with timestamp validation. Keep the raw body intact and deduplicate downstream business actions by `event_id`, because retries/redeliveries can contain the same event. Delivery happens independently after call settlement. Use **Voicely Agents → Delivery** to inspect attempts or request a controlled redelivery. A completed call can remain successfully settled even if the receiving workflow is unavailable.
 
-## AI Agent tool
+## Retry safety and workflow migration
 
-Connect **Voicely** to an n8n **AI Agent** through its Tool connector. Select **Voice → Get Many**
-and attach your existing Voicely API credential. The agent receives actual voice IDs and names
-as JSON and can use them in its answer. This action does not generate audio or spend TTS credits.
+Speech operations expose an operation identity. Reuse it only for the same intended operation when recovering an uncertain response. Use a new identity for new work. Avoid automatic retries of uncertain writes; inspect the authoritative result first.
 
-Import the [AI Agent voice example](https://github.com/voicelystudio/n8n-nodes-voicely/blob/main/examples/ai-agent-voices.json) for a ready-wired example.
-Configure the Voicely credential and a separate chat-model credential, then execute the workflow.
-The example uses n8n's OpenAI Chat Model; a compatible tool-calling model connected to the agent
-can be used instead. Model access and any model charges are separate from Voicely.
+The [workflow converter](migration/index.html) runs locally in your browser when served as static files. It reviews supported speech/voice mappings and produces a new inactive workflow; it does not upload your file or request a key. Map actual Voicely voice/model IDs, bind credentials privately, review the report and test before activation. Dynamic mappings require account-side configuration. It does not transfer private voices, balances or third-party permissions, and it is not a universal credential scrubber. Review custom code and linked workflows separately.
 
-This does not add an LLM or speech-to-text service to Voicely. AI tools consume JSON, not a playable
-audio response. For speech generation with binary output, use the existing HTTP or WebSocket action
-in the main workflow and pass its binary file to the next node. Do not rely on the AI Agent to play
-or forward generated audio. No billing, polling, dependency or operational limit is added by tool support.
+Examples are available in this GitHub repository; they are not bundled inside the npm package. The migration utility is bundled.
 
-## Development
+## Development and license
 
-Generated with the official n8n programmatic scaffold.
-`npm run build`, `npm run lint`, and `npm test` are local package checks, not Next/SaaS builds.
-Use `npm run dev` for an isolated development n8n instance. Real generation uses your API credits.
+Run `npm ci --ignore-scripts`, `npm run lint` and `npm test` to build and validate the connector with the n8n node CLI. The package has no external runtime dependencies. Release publishing uses the repository's GitHub Actions workflow with provenance and an owner-reviewed npm publication stage.
 
-The node opts into n8n's native tool wrapper with `usableAsTool: true`. The documented agent example
-uses Voice → Get Many, which returns JSON. No verification lint rule is disabled.
-Install development tooling with `npm ci --ignore-scripts`: a transitive lint dependency's
-package-manager enforcement lifecycle fails under npm. Explicit build, lint and test still run.
-The installed CLI can launch a local n8n npm subprocess or use an external instance. Docker is
-not mandatory for local npm mode. Automated integration fixtures use an isolated n8n engine,
-synthetic HTTP/WS upstreams and the packed community package. They cover credentials, discovery,
-linked binary output, error/cancel paths, multilingual batches and the public example workflows.
-Synthetic tests do not establish live provider capacity or n8n Cloud compatibility.
-
-The private sibling `voicely-n8n-service` is not part of this npm package or public source.
-It forwards to the existing API, which retains the central Voicely DB and billing ownership.
+This connector is MIT licensed; see [LICENSE.md](LICENSE.md). Hosted Voicely services and separately deployed runtime components retain their own terms and applicable licenses.

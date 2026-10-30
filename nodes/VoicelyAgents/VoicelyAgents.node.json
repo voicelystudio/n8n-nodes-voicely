@@ -1,0 +1,15 @@
+{
+  "node": "@voicelystudio/n8n-nodes-voicely.voicelyAgents",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": [
+    "Communication"
+  ],
+  "resources": {
+    "primaryDocumentation": [
+      {
+        "url": "https://tryvoicely.com/integrations/n8n"
+      }
+    ]
+  }
+}

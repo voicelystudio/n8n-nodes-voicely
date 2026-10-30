@@ -4,13 +4,14 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { NodeApiError } = require('n8n-workflow');
-const { Voicely } = require('../dist/nodes/Voicely/Voicely.node');
+const { Voicely: VersionedVoicely } = require('../dist/nodes/Voicely/Voicely.node');
+const Voicely = class { constructor() { return new VersionedVoicely().getNodeType(1); } };
 const { VoicelyApi } = require('../dist/credentials/VoicelyApi.credentials');
 const {
 	responseMetadata,
 	serviceOrigin,
 	timeoutValue,
-} = require('../dist/nodes/Voicely/transport');
+} = require('../dist/nodes/Voicely/v1/transport');
 const AUDIO = Buffer.from([0x49, 0x44, 0x33, 0, 1, 2, 3]);
 const OK = () => ({
 	statusCode: 200,
@@ -318,8 +319,8 @@ test('public package declares no external runtime dependencies and includes only
 	assert.equal(p.n8n.strict, true);
 	for (const f of [...p.n8n.nodes, ...p.n8n.credentials])
 		assert.ok(fs.existsSync(path.join(__dirname, '..', f)));
-	for (const f of ['Voicely.node.js', 'transport.js']) {
-		const source = fs.readFileSync(path.join(__dirname, '../dist/nodes/Voicely', f), 'utf8');
+	for (const f of ['VoicelyV1.node.js', 'transport.js']) {
+		const source = fs.readFileSync(path.join(__dirname, '../dist/nodes/Voicely/v1', f), 'utf8');
 		assert.doesNotMatch(source, /process\.env|require\(['"](?:node:)?fs['"]\)/);
 		assert.doesNotMatch(source, /better-sqlite3|sqlite|spendV2|auditV2|\/v1\/user|setInterval/);
 	}

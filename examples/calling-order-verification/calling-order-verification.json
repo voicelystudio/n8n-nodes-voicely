@@ -1,0 +1,670 @@
+{
+  "name": "Voicely Calling Agent — order lookup and verification",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voicely-order-tools",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "e604e549-bd20-4071-ab85-90399cae67c1",
+      "name": "Voicely Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -176,
+        -240
+      ],
+      "webhookId": "c7e19fca-5296-4895-a2eb-a32fe1ab4329"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"voicelyPolicy\": {\n    \"tableId\": \"SELECT_YOUR_SYNTHETIC_ORDER_TABLE_ID\",\n    \"windowMs\": 300000,\n    \"bodyBytes\": 262144,\n    \"depth\": 32,\n    \"maxAttempts\": 2,\n    \"historyRows\": 100,\n    \"lookupRows\": 2,\n    \"referencePattern\": \"^DEMO-[0-9]{4}$\",\n    \"verificationPattern\": \"^[0-9]{4}$\"\n  }\n}",
+        "includeOtherFields": true,
+        "options": {
+          "stripBinary": false
+        }
+      },
+      "id": "8d4f72f2-76d4-4353-9539-6d5b1b03032d",
+      "name": "Voicely Policy",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        64,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return await (async function prepareSignedRequest(){\n const items=$input.all();if(items.length!==1)throw Error('voicely_webhook_item_invalid');\n const item=items[0],policy=item.json.voicelyPolicy;\n for(const name of ['windowMs','bodyBytes','depth'])if(!Number.isSafeInteger(policy?.[name])||policy[name]<=0)throw Error('voicely_webhook_policy_required');\n const headers=item.json.headers,id=headers?.['x-voicely-event-id'],stamp=headers?.['x-voicely-timestamp'],signature=headers?.['x-voicely-signature'];\n if(typeof id!=='string'||!id||typeof stamp!=='string'||!/^\\d+$/.test(stamp)||!Number.isSafeInteger(Number(stamp))||typeof signature!=='string'||!/^v1=[a-f0-9]{64}$/.test(signature)||Math.abs(Date.now()-Number(stamp))>policy.windowMs)throw Error('voicely_webhook_unauthorized');\n const raw=await this.helpers.getBinaryDataBuffer(0,'data');if(!Buffer.isBuffer(raw)||raw.length>policy.bodyBytes)throw Error('voicely_webhook_body_refused');\n const prefix=Buffer.from(JSON.stringify([1,Number(stamp),id])+'\\n'),frame=Buffer.concat([prefix,raw]);\n return [{json:{voicelyPolicy:policy,voicelyId:id,voicelyStamp:stamp,voicelySignature:signature,voicelyRaw:raw.toString('base64')},binary:{voicelySigned:{data:frame.toString('base64'),mimeType:'application/octet-stream'}}}];\n}).call(this);"
+      },
+      "id": "7871d1d0-ee46-4442-a6a3-4275c527408d",
+      "name": "Prepare Voicely Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        -240
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "binaryData": true,
+        "binaryPropertyName": "voicelySigned",
+        "dataPropertyName": "expectedSignature"
+      },
+      "id": "22e21142-3304-43c4-bba9-dd5d4532369a",
+      "name": "Verify Voicely HMAC",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        -16
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return await (function acceptSignedRequest(kind){\n const items=$input.all();if(items.length!==1)throw Error('voicely_webhook_item_invalid');const item=items[0],j=item.json,p=j.voicelyPolicy;\n for(const name of ['windowMs','bodyBytes','depth'])if(!Number.isSafeInteger(p?.[name])||p[name]<=0)throw Error('voicely_webhook_policy_required');\n if(typeof j.expectedSignature!=='string'||!/^[a-f0-9]{64}$/.test(j.expectedSignature)||typeof j.voicelySignature!=='string'||!/^v1=[a-f0-9]{64}$/.test(j.voicelySignature))throw Error('voicely_webhook_unauthorized');\n // Fixed-width comparison avoids an early-exit string comparison. This is not\n // advertised as native constant-time; the dedicated Trigger uses timingSafeEqual.\n let mismatch=0;for(let i=0;i<64;i++)mismatch|=j.expectedSignature.charCodeAt(i)^j.voicelySignature.charCodeAt(i+3);\n if(mismatch||typeof j.voicelyStamp!=='string'||!/^\\d+$/.test(j.voicelyStamp)||!Number.isSafeInteger(Number(j.voicelyStamp))||Math.abs(Date.now()-Number(j.voicelyStamp))>p.windowMs)throw Error('voicely_webhook_unauthorized');\n if(typeof j.voicelyRaw!=='string')throw Error('voicely_webhook_body_refused');const raw=Buffer.from(j.voicelyRaw,'base64');\n if(raw.length>p.bodyBytes||raw.toString('base64')!==j.voicelyRaw)throw Error('voicely_webhook_body_refused');\n const text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))throw Error('voicely_webhook_body_refused');\n // Bound JSON depth before JSON.parse, without treating braces inside strings as structure.\n let depth=0,quoted=false,escaped=false;for(const ch of text){if(quoted){if(escaped)escaped=false;else if(ch==='\\\\')escaped=true;else if(ch==='\"')quoted=false;}else if(ch==='\"')quoted=true;else if(ch==='{'||ch==='['){if(++depth>p.depth)throw Error('voicely_webhook_depth_refused');}else if(ch==='}'||ch===']')depth--;}\n let body;try{body=JSON.parse(text);}catch{throw Error('voicely_webhook_body_refused');}\n if(!body||typeof body!=='object'||Array.isArray(body)||body.schema_version!==1)throw Error('voicely_webhook_contract_invalid');\n if(kind==='tool'){\n  if(body.operation_id!==j.voicelyId||typeof body.call_id!=='string'||!body.call_id||typeof body.agent_id!=='string'||!body.agent_id||!Number.isSafeInteger(body.generation)||body.generation<1||!body.tool||!['read','write','escalate'].includes(body.tool.effect)||!body.arguments||typeof body.arguments!=='object'||Array.isArray(body.arguments))throw Error('voicely_webhook_contract_invalid');\n }else if(body.event_id!==j.voicelyId||!['call.completed','automation.test'].includes(body.event_type))throw Error('voicely_webhook_contract_invalid');\n return [{json:{request:body,idempotencyKey:j.voicelyId},pairedItem:{item:0}}];\n}).call(this,\"tool\");"
+      },
+      "id": "7d83569d-ba81-4e44-8735-3712767a67e3",
+      "name": "Accept Voicely Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -16
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "4369ad44-d249-48be-89a2-b513bf07ebc8",
+      "name": "Prepare Order Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const r=$input.first().json.request,p=$('Voicely Policy').first().json.voicelyPolicy;\n// Original synthetic order demo logic. Language-neutral data; the agent speaks in the caller's language.\nfunction orderFingerprintInput(request){\n const stable=v=>Array.isArray(v)?v.map(stable):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;\n return JSON.stringify(stable([request.call_id,request.agent_id,request.tool,request.arguments]));\n}\nfunction checkedPolicy(p){\n if(!p||!Number.isSafeInteger(p.maxAttempts)||p.maxAttempts<1||!Number.isSafeInteger(p.historyRows)||p.historyRows<1||typeof p.referencePattern!=='string'||typeof p.verificationPattern!=='string')throw Error('order_policy_required');\n try{new RegExp(p.referencePattern,'u');new RegExp(p.verificationPattern,'u');}catch{throw Error('order_policy_required');}return p;\n}\nfunction response(httpStatus,reply){return {httpStatus,reply,needsUpdate:false,needsRecheck:false};}\nfunction refused(httpStatus,code){return response(httpStatus,{error:code});}\nfunction receiptFrom(row,id,fingerprint){\n let entries;try{entries=JSON.parse(row.verification_history);}catch{throw Error('order_state_invalid');}\n if(!Array.isArray(entries)||entries.some(e=>typeof e!=='string'&&(!e||typeof e!=='object'||Array.isArray(e)||typeof e.operation_id!=='string'||typeof e.fingerprint!=='string'||e.response?.operation_id!==e.operation_id||e.response?.state!=='succeeded'||!e.response.result||typeof e.response.result!=='object')))throw Error('order_state_invalid');\n const found=entries.filter(e=>(typeof e==='string'?e:e.operation_id)===id);if(found.length>1)throw Error('order_state_invalid');\n if(found.length){const r=found[0];if(typeof r==='string')return {error:'legacy_operation_replay_unavailable',entries};if(r.fingerprint!==fingerprint)return {error:'operation_identity_conflict',entries};return {reply:JSON.parse(JSON.stringify(r.response)),entries};}\n return {entries};\n}\nfunction orderDecision({rows,request,fingerprint,policy}){\n const p=checkedPolicy(policy),id=request?.operation_id,name=request?.tool?.name,effect=request?.tool?.effect,reference=request?.arguments?.reference;\n if(typeof id!=='string'||!id||typeof reference!=='string'||!new RegExp(p.referencePattern,'u').test(reference)||!((name==='lookup_order'&&effect==='read')||(name==='verify_order'&&effect==='write')))return refused(400,'order_request_invalid');\n if(name==='verify_order'&&(typeof request.arguments.last4!=='string'||!new RegExp(p.verificationPattern,'u').test(request.arguments.last4)))return refused(400,'verification_input_invalid');\n if(typeof fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(fingerprint))throw Error('order_fingerprint_required');\n if(!Array.isArray(rows))throw Error('order_rows_invalid');const found=rows.filter(r=>r&&Object.keys(r).length);if(found.length>1)return refused(409,'order_reference_ambiguous');const order=found[0];\n if(!order){const result=name==='lookup_order'?{order_id:reference,status:'not_found',verification_required:false,message:'Order not found.'}:{order_id:reference,status:'not_found',outcome:'not_found',attempts_remaining:0,message:'Order not found. No verification attempt was recorded.'};return response(200,{operation_id:id,state:'succeeded',result});}\n if(order.order_id!==reference||!Number.isSafeInteger(Number(order.id))||!Number.isSafeInteger(Number(order.failed_attempts))||Number(order.failed_attempts)<0||typeof order.locked!=='boolean'||!['pending_verification','completed'].includes(order.order_status))return refused(500,'order_state_invalid');\n if(name==='verify_order'&&(typeof order.verification_last4!=='string'||!new RegExp(p.verificationPattern,'u').test(order.verification_last4)))return refused(500,'order_state_invalid');\n if(name==='lookup_order')return response(200,{operation_id:id,state:'succeeded',result:{order_id:reference,status:order.order_status,verification_required:order.order_status==='pending_verification',message:order.order_status==='pending_verification'?'Order found. Verification is required.':'Order is completed.'}});\n let prior;try{prior=receiptFrom(order,id,fingerprint);}catch{return refused(500,'order_state_invalid');}\n if(prior.error)return refused(409,prior.error);if(prior.reply)return response(200,prior.reply);if(prior.entries.length>=p.historyRows)return refused(409,'order_receipt_capacity_reached');\n let status=order.order_status,attempts=Number(order.failed_attempts),locked=order.locked,outcome,message;\n if(status==='completed'){outcome='already_completed';message='Your order is already completed.';}\n else if(locked||attempts>=p.maxAttempts){locked=true;outcome='locked';message='Verification is locked. Please contact support.';}\n else if(request.arguments.last4===order.verification_last4){status='completed';outcome='verified';message='Verification successful. Your order is completed.';}\n else{attempts++;locked=attempts>=p.maxAttempts;outcome=locked?'locked':'retry';message=locked?'Verification failed. Attempts exhausted.':'Verification failed. Please try again.';}\n const reply={operation_id:id,state:'succeeded',result:{order_id:reference,status,outcome,attempts_remaining:Math.max(0,p.maxAttempts-attempts),message}};\n const history=JSON.stringify([...prior.entries,{operation_id:id,fingerprint,response:reply}]);\n return {httpStatus:200,reply,needsUpdate:true,needsRecheck:false,row_id:Number(order.id),order_id:reference,operation_id:id,fingerprint,old_state:{order_id:order.order_id,verification_last4:order.verification_last4,failed_attempts:order.failed_attempts,order_status:order.order_status,locked:order.locked,verification_history:order.verification_history},next_status:status,next_failed_attempts:attempts,next_locked:locked,next_verification_history:history};\n}\nfunction savedDecision(decision,rows){\n if(!decision.needsUpdate)return decision;if(!Array.isArray(rows))throw Error('order_rows_invalid');const items=rows.filter(r=>r&&Object.keys(r).length);\n if(!items.length)return {...decision,needsRecheck:true};if(items.length!==1)return refused(500,'order_commit_unconfirmed');const r=items[0];\n if(Number(r.id)!==decision.row_id||r.order_id!==decision.order_id||r.order_status!==decision.next_status||Number(r.failed_attempts)!==decision.next_failed_attempts||r.locked!==decision.next_locked||r.verification_history!==decision.next_verification_history)return refused(500,'order_commit_unconfirmed');\n return response(200,decision.reply);\n}\nfunction recheckedDecision(decision,rows){\n if(!Array.isArray(rows))throw Error('order_rows_invalid');const items=rows.filter(r=>r&&Object.keys(r).length);if(items.length!==1||Number(items[0].id)!==decision.row_id||items[0].order_id!==decision.order_id)return refused(500,'order_commit_unconfirmed');let prior;\n try{prior=receiptFrom(items[0],decision.operation_id,decision.fingerprint);}catch{return refused(500,'order_commit_unconfirmed');}\n if(prior.error)return refused(409,prior.error);if(prior.reply)return response(200,prior.reply);\n // This execution's conditional update returned zero rows: it did not commit.\n // A 2xx transport envelope is required by the existing tool contract to attest this.\n return response(200,{operation_id:decision.operation_id,state:'failed',committed:false,result:{order_id:decision.order_id,status:items[0].order_status,outcome:'conflict',message:'Order changed concurrently. This verification attempt was not recorded.'}});\n}\n\ncheckedPolicy(p);if(!Number.isSafeInteger(p.lookupRows)||p.lookupRows<2)throw Error('order_policy_required');\nif(typeof r?.arguments?.reference!=='string'||!new RegExp(p.referencePattern,'u').test(r.arguments.reference))return [{json:{request:r,invalid:true,fingerprint_input:''}}];return [{json:{request:r,order_id:r.arguments.reference,fingerprint_input:orderFingerprintInput(r)}}];"
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "c9c300c2-c79b-4c36-8718-533cc4c41ae3",
+      "name": "Fingerprint Order Request",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "action": "hash",
+        "type": "SHA256",
+        "binaryData": false,
+        "value": "={{ $json.fingerprint_input }}",
+        "dataPropertyName": "fingerprint",
+        "encoding": "hex"
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "={{ $('Voicely Policy').first().json.voicelyPolicy.tableId }}",
+          "mode": "id"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "order_id",
+              "keyValue": "={{ $('Prepare Order Request').first().json.order_id || '__invalid__' }}"
+            }
+          ]
+        },
+        "limit": "={{ $('Voicely Policy').first().json.voicelyPolicy.lookupRows }}"
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        0
+      ],
+      "id": "baa17022-9874-4d19-84ec-bf94203f4b6e",
+      "name": "Read Synthetic Order",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "6350877f-4042-4d49-8ee3-4feb2fc50813",
+      "name": "Decide Order Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Original synthetic order demo logic. Language-neutral data; the agent speaks in the caller's language.\nfunction orderFingerprintInput(request){\n const stable=v=>Array.isArray(v)?v.map(stable):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;\n return JSON.stringify(stable([request.call_id,request.agent_id,request.tool,request.arguments]));\n}\nfunction checkedPolicy(p){\n if(!p||!Number.isSafeInteger(p.maxAttempts)||p.maxAttempts<1||!Number.isSafeInteger(p.historyRows)||p.historyRows<1||typeof p.referencePattern!=='string'||typeof p.verificationPattern!=='string')throw Error('order_policy_required');\n try{new RegExp(p.referencePattern,'u');new RegExp(p.verificationPattern,'u');}catch{throw Error('order_policy_required');}return p;\n}\nfunction response(httpStatus,reply){return {httpStatus,reply,needsUpdate:false,needsRecheck:false};}\nfunction refused(httpStatus,code){return response(httpStatus,{error:code});}\nfunction receiptFrom(row,id,fingerprint){\n let entries;try{entries=JSON.parse(row.verification_history);}catch{throw Error('order_state_invalid');}\n if(!Array.isArray(entries)||entries.some(e=>typeof e!=='string'&&(!e||typeof e!=='object'||Array.isArray(e)||typeof e.operation_id!=='string'||typeof e.fingerprint!=='string'||e.response?.operation_id!==e.operation_id||e.response?.state!=='succeeded'||!e.response.result||typeof e.response.result!=='object')))throw Error('order_state_invalid');\n const found=entries.filter(e=>(typeof e==='string'?e:e.operation_id)===id);if(found.length>1)throw Error('order_state_invalid');\n if(found.length){const r=found[0];if(typeof r==='string')return {error:'legacy_operation_replay_unavailable',entries};if(r.fingerprint!==fingerprint)return {error:'operation_identity_conflict',entries};return {reply:JSON.parse(JSON.stringify(r.response)),entries};}\n return {entries};\n}\nfunction orderDecision({rows,request,fingerprint,policy}){\n const p=checkedPolicy(policy),id=request?.operation_id,name=request?.tool?.name,effect=request?.tool?.effect,reference=request?.arguments?.reference;\n if(typeof id!=='string'||!id||typeof reference!=='string'||!new RegExp(p.referencePattern,'u').test(reference)||!((name==='lookup_order'&&effect==='read')||(name==='verify_order'&&effect==='write')))return refused(400,'order_request_invalid');\n if(name==='verify_order'&&(typeof request.arguments.last4!=='string'||!new RegExp(p.verificationPattern,'u').test(request.arguments.last4)))return refused(400,'verification_input_invalid');\n if(typeof fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(fingerprint))throw Error('order_fingerprint_required');\n if(!Array.isArray(rows))throw Error('order_rows_invalid');const found=rows.filter(r=>r&&Object.keys(r).length);if(found.length>1)return refused(409,'order_reference_ambiguous');const order=found[0];\n if(!order){const result=name==='lookup_order'?{order_id:reference,status:'not_found',verification_required:false,message:'Order not found.'}:{order_id:reference,status:'not_found',outcome:'not_found',attempts_remaining:0,message:'Order not found. No verification attempt was recorded.'};return response(200,{operation_id:id,state:'succeeded',result});}\n if(order.order_id!==reference||!Number.isSafeInteger(Number(order.id))||!Number.isSafeInteger(Number(order.failed_attempts))||Number(order.failed_attempts)<0||typeof order.locked!=='boolean'||!['pending_verification','completed'].includes(order.order_status))return refused(500,'order_state_invalid');\n if(name==='verify_order'&&(typeof order.verification_last4!=='string'||!new RegExp(p.verificationPattern,'u').test(order.verification_last4)))return refused(500,'order_state_invalid');\n if(name==='lookup_order')return response(200,{operation_id:id,state:'succeeded',result:{order_id:reference,status:order.order_status,verification_required:order.order_status==='pending_verification',message:order.order_status==='pending_verification'?'Order found. Verification is required.':'Order is completed.'}});\n let prior;try{prior=receiptFrom(order,id,fingerprint);}catch{return refused(500,'order_state_invalid');}\n if(prior.error)return refused(409,prior.error);if(prior.reply)return response(200,prior.reply);if(prior.entries.length>=p.historyRows)return refused(409,'order_receipt_capacity_reached');\n let status=order.order_status,attempts=Number(order.failed_attempts),locked=order.locked,outcome,message;\n if(status==='completed'){outcome='already_completed';message='Your order is already completed.';}\n else if(locked||attempts>=p.maxAttempts){locked=true;outcome='locked';message='Verification is locked. Please contact support.';}\n else if(request.arguments.last4===order.verification_last4){status='completed';outcome='verified';message='Verification successful. Your order is completed.';}\n else{attempts++;locked=attempts>=p.maxAttempts;outcome=locked?'locked':'retry';message=locked?'Verification failed. Attempts exhausted.':'Verification failed. Please try again.';}\n const reply={operation_id:id,state:'succeeded',result:{order_id:reference,status,outcome,attempts_remaining:Math.max(0,p.maxAttempts-attempts),message}};\n const history=JSON.stringify([...prior.entries,{operation_id:id,fingerprint,response:reply}]);\n return {httpStatus:200,reply,needsUpdate:true,needsRecheck:false,row_id:Number(order.id),order_id:reference,operation_id:id,fingerprint,old_state:{order_id:order.order_id,verification_last4:order.verification_last4,failed_attempts:order.failed_attempts,order_status:order.order_status,locked:order.locked,verification_history:order.verification_history},next_status:status,next_failed_attempts:attempts,next_locked:locked,next_verification_history:history};\n}\nfunction savedDecision(decision,rows){\n if(!decision.needsUpdate)return decision;if(!Array.isArray(rows))throw Error('order_rows_invalid');const items=rows.filter(r=>r&&Object.keys(r).length);\n if(!items.length)return {...decision,needsRecheck:true};if(items.length!==1)return refused(500,'order_commit_unconfirmed');const r=items[0];\n if(Number(r.id)!==decision.row_id||r.order_id!==decision.order_id||r.order_status!==decision.next_status||Number(r.failed_attempts)!==decision.next_failed_attempts||r.locked!==decision.next_locked||r.verification_history!==decision.next_verification_history)return refused(500,'order_commit_unconfirmed');\n return response(200,decision.reply);\n}\nfunction recheckedDecision(decision,rows){\n if(!Array.isArray(rows))throw Error('order_rows_invalid');const items=rows.filter(r=>r&&Object.keys(r).length);if(items.length!==1||Number(items[0].id)!==decision.row_id||items[0].order_id!==decision.order_id)return refused(500,'order_commit_unconfirmed');let prior;\n try{prior=receiptFrom(items[0],decision.operation_id,decision.fingerprint);}catch{return refused(500,'order_commit_unconfirmed');}\n if(prior.error)return refused(409,prior.error);if(prior.reply)return response(200,prior.reply);\n // This execution's conditional update returned zero rows: it did not commit.\n // A 2xx transport envelope is required by the existing tool contract to attest this.\n return response(200,{operation_id:decision.operation_id,state:'failed',committed:false,result:{order_id:decision.order_id,status:items[0].order_status,outcome:'conflict',message:'Order changed concurrently. This verification attempt was not recorded.'}});\n}\n\nconst r=$('Prepare Order Request').first().json.request,p=$('Voicely Policy').first().json.voicelyPolicy,f=$('Fingerprint Order Request').first().json.fingerprint;return [{json:orderDecision({rows:$input.all().map(i=>i.json),request:r,fingerprint:f,policy:p})}];"
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "cd69ccb3-3e88-41af-baeb-4ac9f31f4d1a",
+      "name": "Needs Conditional Write?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "496deec8-3a46-42f7-9444-12cba5bac36c",
+              "leftValue": "={{ $json.needsUpdate }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "={{ $('Voicely Policy').first().json.voicelyPolicy.tableId }}",
+          "mode": "id"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.row_id }}"
+            },
+            {
+              "keyName": "order_id",
+              "keyValue": "={{ $json.old_state.order_id }}"
+            },
+            {
+              "keyName": "verification_last4",
+              "keyValue": "={{ $json.old_state.verification_last4 }}"
+            },
+            {
+              "keyName": "failed_attempts",
+              "keyValue": "={{ $json.old_state.failed_attempts }}"
+            },
+            {
+              "keyName": "order_status",
+              "keyValue": "={{ $json.old_state.order_status }}"
+            },
+            {
+              "keyName": "locked",
+              "keyValue": "={{ $json.old_state.locked }}"
+            },
+            {
+              "keyName": "verification_history",
+              "keyValue": "={{ $json.old_state.verification_history }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "locked": "={{ $json.next_locked }}",
+            "order_status": "={{ $json.next_status }}",
+            "failed_attempts": "={{ $json.next_failed_attempts }}",
+            "verification_history": "={{ $json.next_verification_history }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "verification_last4",
+              "displayName": "verification_last4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "order_status",
+              "displayName": "order_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "failed_attempts",
+              "displayName": "failed_attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "locked",
+              "displayName": "locked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "verification_history",
+              "displayName": "verification_history",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2200,
+        -120
+      ],
+      "id": "db1795bc-9167-4515-b066-565e041739b0",
+      "name": "Commit Synthetic Order",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "8d90714a-9d64-4a18-8e88-f484d54c3194",
+      "name": "Confirm Saved Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        -120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Original synthetic order demo logic. Language-neutral data; the agent speaks in the caller's language.\nfunction orderFingerprintInput(request){\n const stable=v=>Array.isArray(v)?v.map(stable):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;\n return JSON.stringify(stable([request.call_id,request.agent_id,request.tool,request.arguments]));\n}\nfunction checkedPolicy(p){\n if(!p||!Number.isSafeInteger(p.maxAttempts)||p.maxAttempts<1||!Number.isSafeInteger(p.historyRows)||p.historyRows<1||typeof p.referencePattern!=='string'||typeof p.verificationPattern!=='string')throw Error('order_policy_required');\n try{new RegExp(p.referencePattern,'u');new RegExp(p.verificationPattern,'u');}catch{throw Error('order_policy_required');}return p;\n}\nfunction response(httpStatus,reply){return {httpStatus,reply,needsUpdate:false,needsRecheck:false};}\nfunction refused(httpStatus,code){return response(httpStatus,{error:code});}\nfunction receiptFrom(row,id,fingerprint){\n let entries;try{entries=JSON.parse(row.verification_history);}catch{throw Error('order_state_invalid');}\n if(!Array.isArray(entries)||entries.some(e=>typeof e!=='string'&&(!e||typeof e!=='object'||Array.isArray(e)||typeof e.operation_id!=='string'||typeof e.fingerprint!=='string'||e.response?.operation_id!==e.operation_id||e.response?.state!=='succeeded'||!e.response.result||typeof e.response.result!=='object')))throw Error('order_state_invalid');\n const found=entries.filter(e=>(typeof e==='string'?e:e.operation_id)===id);if(found.length>1)throw Error('order_state_invalid');\n if(found.length){const r=found[0];if(typeof r==='string')return {error:'legacy_operation_replay_unavailable',entries};if(r.fingerprint!==fingerprint)return {error:'operation_identity_conflict',entries};return {reply:JSON.parse(JSON.stringify(r.response)),entries};}\n return {entries};\n}\nfunction orderDecision({rows,request,fingerprint,policy}){\n const p=checkedPolicy(policy),id=request?.operation_id,name=request?.tool?.name,effect=request?.tool?.effect,reference=request?.arguments?.reference;\n if(typeof id!=='string'||!id||typeof reference!=='string'||!new RegExp(p.referencePattern,'u').test(reference)||!((name==='lookup_order'&&effect==='read')||(name==='verify_order'&&effect==='write')))return refused(400,'order_request_invalid');\n if(name==='verify_order'&&(typeof request.arguments.last4!=='string'||!new RegExp(p.verificationPattern,'u').test(request.arguments.last4)))return refused(400,'verification_input_invalid');\n if(typeof fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(fingerprint))throw Error('order_fingerprint_required');\n if(!Array.isArray(rows))throw Error('order_rows_invalid');const found=rows.filter(r=>r&&Object.keys(r).length);if(found.length>1)return refused(409,'order_reference_ambiguous');const order=found[0];\n if(!order){const result=name==='lookup_order'?{order_id:reference,status:'not_found',verification_required:false,message:'Order not found.'}:{order_id:reference,status:'not_found',outcome:'not_found',attempts_remaining:0,message:'Order not found. No verification attempt was recorded.'};return response(200,{operation_id:id,state:'succeeded',result});}\n if(order.order_id!==reference||!Number.isSafeInteger(Number(order.id))||!Number.isSafeInteger(Number(order.failed_attempts))||Number(order.failed_attempts)<0||typeof order.locked!=='boolean'||!['pending_verification','completed'].includes(order.order_status))return refused(500,'order_state_invalid');\n if(name==='verify_order'&&(typeof order.verification_last4!=='string'||!new RegExp(p.verificationPattern,'u').test(order.verification_last4)))return refused(500,'order_state_invalid');\n if(name==='lookup_order')return response(200,{operation_id:id,state:'succeeded',result:{order_id:reference,status:order.order_status,verification_required:order.order_status==='pending_verification',message:order.order_status==='pending_verification'?'Order found. Verification is required.':'Order is completed.'}});\n let prior;try{prior=receiptFrom(order,id,fingerprint);}catch{return refused(500,'order_state_invalid');}\n if(prior.error)return refused(409,prior.error);if(prior.reply)return response(200,prior.reply);if(prior.entries.length>=p.historyRows)return refused(409,'order_receipt_capacity_reached');\n let status=order.order_status,attempts=Number(order.failed_attempts),locked=order.locked,outcome,message;\n if(status==='completed'){outcome='already_completed';message='Your order is already completed.';}\n else if(locked||attempts>=p.maxAttempts){locked=true;outcome='locked';message='Verification is locked. Please contact support.';}\n else if(request.arguments.last4===order.verification_last4){status='completed';outcome='verified';message='Verification successful. Your order is completed.';}\n else{attempts++;locked=attempts>=p.maxAttempts;outcome=locked?'locked':'retry';message=locked?'Verification failed. Attempts exhausted.':'Verification failed. Please try again.';}\n const reply={operation_id:id,state:'succeeded',result:{order_id:reference,status,outcome,attempts_remaining:Math.max(0,p.maxAttempts-attempts),message}};\n const history=JSON.stringify([...prior.entries,{operation_id:id,fingerprint,response:reply}]);\n return {httpStatus:200,reply,needsUpdate:true,needsRecheck:false,row_id:Number(order.id),order_id:reference,operation_id:id,fingerprint,old_state:{order_id:order.order_id,verification_last4:order.verification_last4,failed_attempts:order.failed_attempts,order_status:order.order_status,locked:order.locked,verification_history:order.verification_history},next_status:status,next_failed_attempts:attempts,next_locked:locked,next_verification_history:history};\n}\nfunction savedDecision(decision,rows){\n if(!decision.needsUpdate)return decision;if(!Array.isArray(rows))throw Error('order_rows_invalid');const items=rows.filter(r=>r&&Object.keys(r).length);\n if(!items.length)return {...decision,needsRecheck:true};if(items.length!==1)return refused(500,'order_commit_unconfirmed');const r=items[0];\n if(Number(r.id)!==decision.row_id||r.order_id!==decision.order_id||r.order_status!==decision.next_status||Number(r.failed_attempts)!==decision.next_failed_attempts||r.locked!==decision.next_locked||r.verification_history!==decision.next_verification_history)return refused(500,'order_commit_unconfirmed');\n return response(200,decision.reply);\n}\nfunction recheckedDecision(decision,rows){\n if(!Array.isArray(rows))throw Error('order_rows_invalid');const items=rows.filter(r=>r&&Object.keys(r).length);if(items.length!==1||Number(items[0].id)!==decision.row_id||items[0].order_id!==decision.order_id)return refused(500,'order_commit_unconfirmed');let prior;\n try{prior=receiptFrom(items[0],decision.operation_id,decision.fingerprint);}catch{return refused(500,'order_commit_unconfirmed');}\n if(prior.error)return refused(409,prior.error);if(prior.reply)return response(200,prior.reply);\n // This execution's conditional update returned zero rows: it did not commit.\n // A 2xx transport envelope is required by the existing tool contract to attest this.\n return response(200,{operation_id:decision.operation_id,state:'failed',committed:false,result:{order_id:decision.order_id,status:items[0].order_status,outcome:'conflict',message:'Order changed concurrently. This verification attempt was not recorded.'}});\n}\n\nreturn [{json:savedDecision($('Decide Order Result').first().json,$input.all().map(i=>i.json))}];"
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "df235773-6453-4617-b40e-28567b865d9d",
+      "name": "Needs Conflict Recheck?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2640,
+        -120
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0cc0bbf7-894e-4bfa-8f42-800e997be4c2",
+              "leftValue": "={{ $json.needsRecheck }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "={{ $('Voicely Policy').first().json.voicelyPolicy.tableId }}",
+          "mode": "id"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $('Decide Order Result').first().json.row_id }}"
+            }
+          ]
+        },
+        "limit": "={{ $('Voicely Policy').first().json.voicelyPolicy.lookupRows }}"
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2860,
+        -240
+      ],
+      "id": "5c28f24f-505c-4b92-a72d-3879267efa2a",
+      "name": "Recheck Synthetic Order",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "a3a2bbc7-a822-4793-90b6-f925b9dd275a",
+      "name": "Resolve Concurrent Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3080,
+        -240
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Original synthetic order demo logic. Language-neutral data; the agent speaks in the caller's language.\nfunction orderFingerprintInput(request){\n const stable=v=>Array.isArray(v)?v.map(stable):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;\n return JSON.stringify(stable([request.call_id,request.agent_id,request.tool,request.arguments]));\n}\nfunction checkedPolicy(p){\n if(!p||!Number.isSafeInteger(p.maxAttempts)||p.maxAttempts<1||!Number.isSafeInteger(p.historyRows)||p.historyRows<1||typeof p.referencePattern!=='string'||typeof p.verificationPattern!=='string')throw Error('order_policy_required');\n try{new RegExp(p.referencePattern,'u');new RegExp(p.verificationPattern,'u');}catch{throw Error('order_policy_required');}return p;\n}\nfunction response(httpStatus,reply){return {httpStatus,reply,needsUpdate:false,needsRecheck:false};}\nfunction refused(httpStatus,code){return response(httpStatus,{error:code});}\nfunction receiptFrom(row,id,fingerprint){\n let entries;try{entries=JSON.parse(row.verification_history);}catch{throw Error('order_state_invalid');}\n if(!Array.isArray(entries)||entries.some(e=>typeof e!=='string'&&(!e||typeof e!=='object'||Array.isArray(e)||typeof e.operation_id!=='string'||typeof e.fingerprint!=='string'||e.response?.operation_id!==e.operation_id||e.response?.state!=='succeeded'||!e.response.result||typeof e.response.result!=='object')))throw Error('order_state_invalid');\n const found=entries.filter(e=>(typeof e==='string'?e:e.operation_id)===id);if(found.length>1)throw Error('order_state_invalid');\n if(found.length){const r=found[0];if(typeof r==='string')return {error:'legacy_operation_replay_unavailable',entries};if(r.fingerprint!==fingerprint)return {error:'operation_identity_conflict',entries};return {reply:JSON.parse(JSON.stringify(r.response)),entries};}\n return {entries};\n}\nfunction orderDecision({rows,request,fingerprint,policy}){\n const p=checkedPolicy(policy),id=request?.operation_id,name=request?.tool?.name,effect=request?.tool?.effect,reference=request?.arguments?.reference;\n if(typeof id!=='string'||!id||typeof reference!=='string'||!new RegExp(p.referencePattern,'u').test(reference)||!((name==='lookup_order'&&effect==='read')||(name==='verify_order'&&effect==='write')))return refused(400,'order_request_invalid');\n if(name==='verify_order'&&(typeof request.arguments.last4!=='string'||!new RegExp(p.verificationPattern,'u').test(request.arguments.last4)))return refused(400,'verification_input_invalid');\n if(typeof fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(fingerprint))throw Error('order_fingerprint_required');\n if(!Array.isArray(rows))throw Error('order_rows_invalid');const found=rows.filter(r=>r&&Object.keys(r).length);if(found.length>1)return refused(409,'order_reference_ambiguous');const order=found[0];\n if(!order){const result=name==='lookup_order'?{order_id:reference,status:'not_found',verification_required:false,message:'Order not found.'}:{order_id:reference,status:'not_found',outcome:'not_found',attempts_remaining:0,message:'Order not found. No verification attempt was recorded.'};return response(200,{operation_id:id,state:'succeeded',result});}\n if(order.order_id!==reference||!Number.isSafeInteger(Number(order.id))||!Number.isSafeInteger(Number(order.failed_attempts))||Number(order.failed_attempts)<0||typeof order.locked!=='boolean'||!['pending_verification','completed'].includes(order.order_status))return refused(500,'order_state_invalid');\n if(name==='verify_order'&&(typeof order.verification_last4!=='string'||!new RegExp(p.verificationPattern,'u').test(order.verification_last4)))return refused(500,'order_state_invalid');\n if(name==='lookup_order')return response(200,{operation_id:id,state:'succeeded',result:{order_id:reference,status:order.order_status,verification_required:order.order_status==='pending_verification',message:order.order_status==='pending_verification'?'Order found. Verification is required.':'Order is completed.'}});\n let prior;try{prior=receiptFrom(order,id,fingerprint);}catch{return refused(500,'order_state_invalid');}\n if(prior.error)return refused(409,prior.error);if(prior.reply)return response(200,prior.reply);if(prior.entries.length>=p.historyRows)return refused(409,'order_receipt_capacity_reached');\n let status=order.order_status,attempts=Number(order.failed_attempts),locked=order.locked,outcome,message;\n if(status==='completed'){outcome='already_completed';message='Your order is already completed.';}\n else if(locked||attempts>=p.maxAttempts){locked=true;outcome='locked';message='Verification is locked. Please contact support.';}\n else if(request.arguments.last4===order.verification_last4){status='completed';outcome='verified';message='Verification successful. Your order is completed.';}\n else{attempts++;locked=attempts>=p.maxAttempts;outcome=locked?'locked':'retry';message=locked?'Verification failed. Attempts exhausted.':'Verification failed. Please try again.';}\n const reply={operation_id:id,state:'succeeded',result:{order_id:reference,status,outcome,attempts_remaining:Math.max(0,p.maxAttempts-attempts),message}};\n const history=JSON.stringify([...prior.entries,{operation_id:id,fingerprint,response:reply}]);\n return {httpStatus:200,reply,needsUpdate:true,needsRecheck:false,row_id:Number(order.id),order_id:reference,operation_id:id,fingerprint,old_state:{order_id:order.order_id,verification_last4:order.verification_last4,failed_attempts:order.failed_attempts,order_status:order.order_status,locked:order.locked,verification_history:order.verification_history},next_status:status,next_failed_attempts:attempts,next_locked:locked,next_verification_history:history};\n}\nfunction savedDecision(decision,rows){\n if(!decision.needsUpdate)return decision;if(!Array.isArray(rows))throw Error('order_rows_invalid');const items=rows.filter(r=>r&&Object.keys(r).length);\n if(!items.length)return {...decision,needsRecheck:true};if(items.length!==1)return refused(500,'order_commit_unconfirmed');const r=items[0];\n if(Number(r.id)!==decision.row_id||r.order_id!==decision.order_id||r.order_status!==decision.next_status||Number(r.failed_attempts)!==decision.next_failed_attempts||r.locked!==decision.next_locked||r.verification_history!==decision.next_verification_history)return refused(500,'order_commit_unconfirmed');\n return response(200,decision.reply);\n}\nfunction recheckedDecision(decision,rows){\n if(!Array.isArray(rows))throw Error('order_rows_invalid');const items=rows.filter(r=>r&&Object.keys(r).length);if(items.length!==1||Number(items[0].id)!==decision.row_id||items[0].order_id!==decision.order_id)return refused(500,'order_commit_unconfirmed');let prior;\n try{prior=receiptFrom(items[0],decision.operation_id,decision.fingerprint);}catch{return refused(500,'order_commit_unconfirmed');}\n if(prior.error)return refused(409,prior.error);if(prior.reply)return response(200,prior.reply);\n // This execution's conditional update returned zero rows: it did not commit.\n // A 2xx transport envelope is required by the existing tool contract to attest this.\n return response(200,{operation_id:decision.operation_id,state:'failed',committed:false,result:{order_id:decision.order_id,status:items[0].order_status,outcome:'conflict',message:'Order changed concurrently. This verification attempt was not recorded.'}});\n}\n\nreturn [{json:recheckedDecision($('Decide Order Result').first().json,$input.all().map(i=>i.json))}];"
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "3be815da-7ea6-4759-8f8a-c34030bd1609",
+      "name": "Reply to Voicely",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        3300,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.reply }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
+      }
+    },
+    {
+      "id": "bd6590c3-8802-411c-a64c-83f72e2ecdbe",
+      "name": "Authentication Refused",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        360
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{httpStatus:401,reply:{error:'webhook_authentication_refused'}}}];"
+      },
+      "onError": "stopWorkflow"
+    }
+  ],
+  "connections": {
+    "Voicely Webhook": {
+      "main": [
+        [
+          {
+            "node": "Voicely Policy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Voicely Policy": {
+      "main": [
+        [
+          {
+            "node": "Prepare Voicely Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Voicely Signature": {
+      "main": [
+        [
+          {
+            "node": "Verify Voicely HMAC",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Authentication Refused",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Voicely HMAC": {
+      "main": [
+        [
+          {
+            "node": "Accept Voicely Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Authentication Refused",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept Voicely Request": {
+      "main": [
+        [
+          {
+            "node": "Prepare Order Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Authentication Refused",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Order Request": {
+      "main": [
+        [
+          {
+            "node": "Fingerprint Order Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fingerprint Order Request": {
+      "main": [
+        [
+          {
+            "node": "Read Synthetic Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Synthetic Order": {
+      "main": [
+        [
+          {
+            "node": "Decide Order Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide Order Result": {
+      "main": [
+        [
+          {
+            "node": "Needs Conditional Write?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Conditional Write?": {
+      "main": [
+        [
+          {
+            "node": "Commit Synthetic Order",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply to Voicely",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit Synthetic Order": {
+      "main": [
+        [
+          {
+            "node": "Confirm Saved Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm Saved Result": {
+      "main": [
+        [
+          {
+            "node": "Needs Conflict Recheck?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Conflict Recheck?": {
+      "main": [
+        [
+          {
+            "node": "Recheck Synthetic Order",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply to Voicely",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recheck Synthetic Order": {
+      "main": [
+        [
+          {
+            "node": "Resolve Concurrent Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Concurrent Result": {
+      "main": [
+        [
+          {
+            "node": "Reply to Voicely",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authentication Refused": {
+      "main": [
+        [
+          {
+            "node": "Reply to Voicely",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

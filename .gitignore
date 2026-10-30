@@ -1,7 +1,9 @@
-dist
 node_modules
-.env
-.env.*
-coverage
-*.tgz
+dist/
 *.tsbuildinfo
+*.tgz
+.env*
+*.env
+*.pem
+*.key
+*key.private*
