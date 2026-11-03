@@ -33,7 +33,8 @@
     "migration",
     "CHANGELOG.md",
     "MODEL-LANGUAGE-VOICE-UAT.md",
-    "examples/studio-v2-model-language-voice-discovery.json"
+    "examples/studio-v2-model-language-voice-discovery.json",
+    "CUSTOM-STYLE-UAT.md"
   ],
   "publishConfig": {
     "access": "public"

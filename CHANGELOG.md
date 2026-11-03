@@ -44,3 +44,9 @@
 - Model-specific Language Get Many and searchable TTS language selection.
 - Voice discovery validates selected model and language; preserve legacy saved fields and routing.
 - No new regular node, Page Size parameter, runtime dependencies or publication.
+
+### 0.2.1 staging refinement — HTTP custom style
+
+- Optional Custom Style Instructions for six supported canonical TTS models; HD and incompatible operations reject nonempty instructions.
+- Preserve empty-style requests, existing usage units and request identity semantics.
+- Defer new streaming UI/output scope; preserve saved WebSocket compatibility internally.

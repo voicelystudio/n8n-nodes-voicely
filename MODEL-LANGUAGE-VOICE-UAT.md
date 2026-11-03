@@ -8,7 +8,7 @@ The standard workflow is **Manual Trigger → Voicely Studio / Speech / Text to 
 2. In **Model and Speech Options**, add **Model**, choose a branded model. Leave **Legacy Model** empty for a new canonical selection.
 3. Add **Language**, choose from the searchable model-specific list. `(Preview)` means preview in Voicely; it does not claim the provider model is GA or every option has been live-tested. Blank preserves the existing automatic language behavior.
 4. Select **Voice** from its refreshed list. After changing model or language, reselect/check the voice. Unsupported retained combinations fail; the node never silently switches model, language or voice.
-5. Enter **Text**. **Output Format** is optional in the same collection. Choose **Options → Speech Transport** for HTTP or WebSocket.
+5. Enter **Text**. **Output Format** is optional in the same collection. New generation uses HTTP. Add Custom Style Instructions only for a supported model; streaming selection is deferred.
 6. Execute only when you intend real synthesis with ordinary entitlements/provider usage. Agent verification performed no paid synthesis.
 
 The seven canonical models share the accepted public stock voice catalog. Voice discovery validates model/language admission; a repeated speaker list is not an error or a guarantee of native accent quality in every language. Owned/cloned voice and STS behavior remains on the existing legacy contract.
@@ -27,7 +27,7 @@ Saved `additionalOptions.model` remains **Legacy Model** and old `languageCode` 
 
 ## Transport truth
 
-HTTP/WS belongs inside Generate Speech, not a required extra workflow node. HD currently uses buffered WebSocket segments; six other adapters use provider streaming. The n8n node outputs a completed binary only after successful completion, not per-chunk downstream items or live playback. No new provider certification is implied.
+New workflows use HTTP and receive one completed audio binary. Streaming output/playback is deferred from this update; no new Speech Transport control is shown. Existing saved WS parameters and older v1 workflows remain compatible. HD has provider-side native streaming capability, but the current Voicely adapter remains buffered. No new provider certification is implied.
 
 ## Owner UAT
 

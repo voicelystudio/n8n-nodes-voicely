@@ -6,7 +6,7 @@ Create speech, transcribe recordings, convert voices, and connect Voicely Callin
 
 | Node | What it does |
 | --- | --- |
-| **Voicely Studio** | Model discovery and Speech/Voice resources handle HTTP/WebSocket TTS, STT, STS and consented voice profiles. Agent, Call, Delivery, Subscription and Tool resources handle discovery, permitted call details, tool registration and automation events. Audio output remains binary data. |
+| **Voicely Studio** | Model discovery and Speech/Voice resources handle HTTP TTS, STT, STS and consented voice profiles. Agent, Call, Delivery, Subscription and Tool resources handle discovery, permitted call details, tool registration and automation events. Audio output remains binary data. |
 | **Voicely Agents Trigger** | Receive authenticated, signed completed-call events for post-call workflows. |
 
 [Voicely integration guide](https://tryvoicely.com/integrations/n8n) · [Account and API access](https://tryvoicely.com/api-access)
@@ -37,7 +37,7 @@ For **Voicely Agents API**, set a strong random **Webhook Signing Secret** priva
 
 Start with the inactive, credential-free [Studio voice catalog example](examples/studio-v2-voice-catalog.json). Import it, select your Studio credential and execute it to list voices without generating audio.
 
-For current TTS discovery, use **Model → Get Many**. It lists the seven API-consistent TTS models, including model-specific languages and provider-streaming versus buffered-segment delivery mode. STT/STS models are chosen inside their own Speech operations. The service supplies model IDs/names and advertised operations; the connector does not invent model, voice or language mappings. Return All and Limit control the returned model items. These new selections require the matching Suite backend with versioned `/v2` TTS routes.
+For current TTS discovery, use **Model → Get Many**. It lists the seven API-consistent TTS models, with compact model-specific language counts and style availability. STT/STS models are chosen inside their own Speech operations. The service supplies model IDs/names and advertised operations; the connector does not invent model, voice or language mappings. Return All and Limit control the returned model items. These new selections require the matching Suite backend with versioned `/v2` TTS routes.
 
 For model-specific voices, use **Voice → Get Many → Catalog Options**: first add Speech Operation (Text to Speech or Speech to Speech), then Model. The node forwards both filters on every catalog page and uses the service's compatible stock/owned voice results. Leave Catalog Options empty to retain the original unfiltered management catalog; that list is not a promise of universal model compatibility. STT is a model-only workflow and has no voice selector.
 
@@ -55,13 +55,13 @@ Existing [HTTP speech](examples/http-speech.json), [WebSocket speech](examples/w
 
 ### Model contract compatibility
 
-The new optional **Model** field uses `additionalOptions.apiModel` for generation and `catalogOptions.apiModel` for compatible-voice discovery. It explicitly uses the Suite's versioned `/v2` TTS contract, aligned with the seven Public API names/IDs. The new catalog is `/v2/models`; compatible stock voices use `/v2/tts/voices`; HTTP and WebSocket synthesis use `/v2/text-to-speech/{voice}` paths.
+The new optional **Model** field uses `additionalOptions.apiModel` for generation and `catalogOptions.apiModel` for compatible-voice discovery. It explicitly uses the Suite's versioned `/v2` TTS contract, aligned with the seven Public API names/IDs. The new catalog is `/v2/models`; compatible stock voices use `/v2/tts/voices`; new HTTP synthesis uses `/v2/text-to-speech/{voice}` paths.
 
 Existing `additionalOptions.model` and `catalogOptions.model` are retained as **Legacy Model** and continue using `/v1` Suite routes. The old Suite `voicely-flash-v1` mapping was 3.8 Flash, while the canonical Public API ID maps to Voicely Classic/2.5 Flash. Versioning preserves both without silently changing existing workflows. Leave Model blank to keep the old service default. Never select both Model and Legacy Model; the node refuses the conflict.
 
 New canonical TTS exposes public stock voices, matching the Public API contract. Existing owned/cloned profiles and Native Speech remain on the legacy Suite contract; they are not advertised as compatible with every new model. STT/STS, legacy V1 workflows and their billing contracts remain separate. Model capabilities describe implementation, not certification of every provider/language combination.
 
-Choose **Options → Speech Transport → WebSocket** for supported TTS models. HD uses buffered segments; the other six use provider streaming. Audio chunks are received during execution, but the n8n node emits a complete binary item after success. It does not emit partial successful items or promise live browser playback. No automatic HTTP fallback, provider substitution or retry occurs.
+Streaming output/playback is deferred from this update. New generation defaults to HTTP and has no Speech Transport selector. Existing saved WebSocket parameters and v1 workflows retain their prior compatibility path; no style extension, chunk output, live playback or automatic HTTP fallback is introduced.
 
 ### Optional chained discovery
 
@@ -91,7 +91,7 @@ Events are HMAC signed with timestamp validation. Keep the raw body intact and d
 
 ## Retry safety and workflow migration
 
-Under **Options**, speech operations expose an Operation Identity and Request Timeout. Speech Transport and voice Simplify are also optional settings. Call Get exposes Include Shared Data under Options; Trigger Options contains Request Timeout and Include Setup Test Events. Get Many uses Return All and Limit; page size is chosen internally (50 per paginated request, reduced for the remaining limit). Agent discovery applies the selected limit to its single-list service response.
+Under **Options**, speech operations expose an Operation Identity and Request Timeout. Voice/model Simplify is also optional. New streaming selection is deferred; saved transport parameters remain compatible. Call Get exposes Include Shared Data under Options; Trigger Options contains Request Timeout and Include Setup Test Events. Get Many uses Return All and Limit; page size is chosen internally (50 per paginated request, reduced for the remaining limit). Agent discovery applies the selected limit to its single-list service response.
 
 Speech operations expose an operation identity. Reuse it only for the same intended operation when recovering an uncertain response. Use a new identity for new work. Avoid automatic retries of uncertain writes; inspect the authoritative result first.
 
@@ -120,3 +120,7 @@ This connector is MIT licensed; see [LICENSE.md](LICENSE.md). Hosted Voicely ser
 ## Model, language and voice discovery
 
 Use dependent selectors within Generate Speech; separate discovery nodes are optional. See [Model → Language → Voice staging guide](MODEL-LANGUAGE-VOICE-UAT.md) for canonical versus saved legacy selections, compact catalog output and streaming limitations.
+
+## Custom style instructions
+
+Select a canonical TTS **Model**, then add **Custom Style Instructions** under **Model and Speech Options**. Six models accept natural-language delivery instructions over HTTP; Voicely HD does not. Keep the spoken script in Text. Empty style preserves normal delivery. After switching to HD, clear a retained style; manual or expression combinations are validated before submission. Do not use STS Custom Style Strength or numeric voice_settings.style as a substitute. See [Custom Style UAT](CUSTOM-STYLE-UAT.md).

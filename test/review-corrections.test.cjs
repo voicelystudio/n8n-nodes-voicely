@@ -51,9 +51,10 @@ test('Get Many UI has Return All and conditional Limit for agents, deliveries, t
   }
 });
 test('optional Studio and Trigger parameters live in collections, including all review findings',()=>{
-  for(const key of ['operationIdentity','requestTimeoutMs','includeData','purpose','effect','verifiedCaller','simplify','speechTransport']){
+  for(const key of ['operationIdentity','requestTimeoutMs','includeData','purpose','effect','verifiedCaller','simplify']){
     assert.equal(properties.some(p=>p.name===key),false,key);assert.ok(options.some(p=>p.name===key),key);
   }
+  assert.equal(properties.some(p=>p.name==='speechTransport'),false);assert.equal(options.some(p=>p.name==='speechTransport'),false);
   assert.deepEqual(trigger.description.properties.map(p=>p.name),['agent','options']);
   assert.deepEqual(trigger.description.properties[1].options.map(p=>p.name),['includeSynthetic','requestTimeoutMs']);
 });

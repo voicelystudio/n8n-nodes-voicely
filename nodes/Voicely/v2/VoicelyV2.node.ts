@@ -24,6 +24,7 @@ import {
   languageCatalogModel,
   speechLanguage,
   compactModel,
+  customStyle,
 } from "./discovery";
 import { websocketRequest } from "./websocket";
 import {
@@ -241,11 +242,9 @@ export class VoicelyV2 implements INodeType {
               name: String(v.name),
               value: String(v.model_id),
               description:
-                v.streaming_mode === "buffered_segments"
-                  ? "HTTP or buffered WebSocket segments"
-                  : v.streaming_mode === "provider_streaming"
-                    ? "HTTP or streaming WebSocket"
-                    : "See service transport support",
+                v.can_use_style === true
+                  ? "Custom style instructions available"
+                  : "Custom style instructions unavailable",
             })),
         };
       },
@@ -529,6 +528,8 @@ export class VoicelyV2 implements INodeType {
           const selected = speechModel(parameters),
             model = selected.id,
             language = speechLanguage(parameters);
+          if (operation !== "textToSpeech")
+            customStyle(parameters, operation, "http");
           if (selected.contract && operation !== "textToSpeech")
             selectionIssue(
               "API Model is for Text to Speech. Select the operation's model instead.",
@@ -544,7 +545,12 @@ export class VoicelyV2 implements INodeType {
               throw Error("output_binary_field_required");
           }
           if (operation === "textToSpeech") {
-            const text = String(this.getNodeParameter("text", index, ""));
+            const text = String(this.getNodeParameter("text", index, "")),
+              style = customStyle(
+                parameters,
+                operation,
+                String(executionOption(this, index, "speechTransport", "http")),
+              );
             if (!text.trim()) throw Error("speech_text_required");
             const id = selectedId(this.getNodeParameter("voice", index));
             route =
@@ -556,6 +562,7 @@ export class VoicelyV2 implements INodeType {
               encodeURIComponent(format);
             body = {
               text,
+              ...(style === undefined ? {} : { delivery_style: style }),
               ...(model ? { model_id: model } : {}),
               ...(language ? { language_code: language } : {}),
               ...(selectedVoiceSettings === undefined

@@ -1,5 +1,6 @@
 import type { INodeProperties } from "n8n-workflow";
 import { automationProperties } from "./automation";
+import { STYLE_MODEL_IDS } from "./discovery";
 const speech = { resource: ["speech"] },
   voice = { resource: ["voice"] };
 const formatIds = [
@@ -80,6 +81,29 @@ export const properties: INodeProperties[] = [
     placeholder: "Choose Model or Add Option",
     displayOptions: { show: speech },
     options: [
+      {
+        displayName: "Custom Style Instructions",
+        name: "styleInstructions",
+        type: "string",
+        typeOptions: { rows: 3 },
+        default: "",
+        placeholder: "e.g. Speak warmly with a calm, confident delivery",
+        description:
+          "Delivery instructions, not spoken text. Available for supported TTS models over HTTP; leave blank for normal delivery. Combined input limits apply.",
+        displayOptions: {
+          show: {
+            "/operation": ["textToSpeech"],
+            "/additionalOptions.apiModel.value": [
+              ...STYLE_MODEL_IDS,
+              { _cnd: { startsWith: "=" } },
+            ],
+          },
+          hide: {
+            "/options.speechTransport": ["websocket"],
+            "/speechTransport": ["websocket"],
+          },
+        },
+      },
       {
         displayName: "Custom Style Strength",
         name: "styleStrength",
@@ -192,7 +216,7 @@ export const properties: INodeProperties[] = [
         type: "json",
         default: "{}",
         description:
-          "Voicely voice controls: stability, similarity_boost, style, use_speaker_boost and speed",
+          "Controls vary by operation and model. Canonical TTS accepts speed here; use Custom Style Instructions for supported delivery prompts. STS and legacy controls retain their existing validation.",
         displayOptions: { hide: { "/operation": ["speechToText"] } },
       },
     ],
@@ -589,21 +613,6 @@ export const properties: INodeProperties[] = [
             "/resource": ["model", "voice"],
             "/operation": ["get", "getAll"],
           },
-        },
-      },
-      {
-        displayName: "Speech Transport",
-        name: "speechTransport",
-        type: "options",
-        default: "http",
-        options: [
-          { name: "HTTP", value: "http" },
-          { name: "WebSocket", value: "websocket" },
-        ],
-        description:
-          "Use the same independent Service URL. WebSocket needs a supported server-side n8n host and has no replay or automatic HTTP fallback.",
-        displayOptions: {
-          show: { "/resource": ["speech"], "/operation": ["textToSpeech"] },
         },
       },
     ],

@@ -85,6 +85,9 @@ export function modelRows(raw: unknown, operation?: string): IDataObject[] {
           : {}),
         ...(row.streaming === "available" ? { streaming: "available" } : {}),
         ...(typeof row.preview === "boolean" ? { preview: row.preview } : {}),
+        ...(typeof row.can_use_style === "boolean"
+          ? { can_use_style: row.can_use_style }
+          : {}),
         ...(Array.isArray(row.transports) &&
         row.transports.every((t) => ["http", "websocket"].includes(String(t)))
           ? { transports: row.transports }
@@ -184,6 +187,8 @@ export function compactModel(row: IDataObject): IDataObject {
   delete rest.languages;
   delete rest.language_options;
   delete rest.streaming;
+  delete rest.streaming_mode;
+  delete rest.transports;
   return {
     ...rest,
     ...(Array.isArray(choices)
@@ -216,4 +221,41 @@ export function languageCatalogModel(value: unknown): string {
   if (!model)
     throw new CatalogSelectionError("Choose Model before loading languages.");
   return model;
+}
+
+// Stable public identities only; provider routing remains server-owned.
+export const STYLE_MODEL_IDS = [
+  "voicely-flash-v1",
+  "voicely-tts-classic-pro-v1",
+  "voicely-tts-preview-v1",
+  "voicely-tts-narration-v1",
+  "voicely-tts-narration-lite-v1",
+  "voicely-tts-classic-lite-v1",
+] as const;
+export function customStyle(
+  options: IDataObject,
+  operation: string,
+  transport: string,
+): string | undefined {
+  const raw = options.styleInstructions;
+  if (raw === undefined) return undefined;
+  if (typeof raw !== "string")
+    throw new CatalogSelectionError("Custom Style Instructions must be text.");
+  const style = raw.trim();
+  if (!style) return undefined;
+  const selected = speechModel(options),
+    id = selected.id === "eleven_v3" ? "voicely-flash-v1" : selected.id;
+  if (operation !== "textToSpeech" || !selected.contract)
+    throw new CatalogSelectionError(
+      "Select a supported Model for Text to Speech before adding Custom Style Instructions. Legacy workflows are unchanged.",
+    );
+  if (!STYLE_MODEL_IDS.some((value) => value === id))
+    throw new CatalogSelectionError(
+      "Custom Style Instructions are unavailable for this model. Voicely HD does not support this control.",
+    );
+  if (transport !== "http")
+    throw new CatalogSelectionError(
+      "Custom Style Instructions use HTTP in this update. Use a new HTTP Generate Speech node; saved WebSocket workflows remain unchanged.",
+    );
+  return style;
 }
