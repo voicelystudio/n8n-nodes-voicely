@@ -1,0 +1,12 @@
+{
+  "voicely-n8n-suite-backend/src/funding.mjs": "3bf8b1bc5a94dc54724c1388e4af488292d6d83a041651db7797bec6eb18e185",
+  "voicely-n8n-suite-backend/src/store.mjs": "47dee1821df3efc8f5fdea8fc71890ecdd03998eb8ad83bfcd03c27cdda5633c",
+  "voicely-n8n-suite-backend/src/operations.mjs": "e2abf4397e9f30f526d549fce9be1bb1c923fd6d754d7fc471013aea62ed66c9",
+  "voicely-n8n-suite-backend/src/cloudSpeech.mjs": "ef97e1a5fbda33f4b1ce239dc36f36b3f3c9a074fb809e107f5ac022e41c026a",
+  "voicely-n8n-suite-backend/src/transcription.mjs": "487eb716f994c7f127d2b67e8507f1447f7f09b7d2fab9a07dd13ee89028a034",
+  "voicely-n8n-suite-backend/src/nativeSpeech.mjs": "822b08e407d5b4a640d4a817cb5d07e021427ac2d3aa31bedd1cbf5390236a72",
+  "voicely-n8n-suite-backend/src/capacity.mjs": "9b5adb321175e08c1a9e505f3904821bcac9c23a483a305a5fabdf86aac06f61",
+  "voicely-n8n-suite-backend/src/wsAdmission.mjs": "84c6f0662d1c3789ea89310b21fd2546f9d5dcba71355dfca557d0482414dc58",
+  "voicely-n8n-suite-backend/src/wsTextQuotes.mjs": "8293d6db550942ed2f6a48f12b3de0ddb2acfd0751a816089e86f2a287d677a4",
+  "voicely-n8n-suite-backend/src/stock.mjs": "e465d8148792cd63460704261af2d03296f5bf40979dbab24c328ae8b4efa525"
+}

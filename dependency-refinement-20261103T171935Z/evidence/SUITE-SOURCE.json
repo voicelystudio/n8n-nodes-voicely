@@ -1,0 +1,31 @@
+{
+  "suiteCheckpoint": "63240f99aacdb302d45e9daa4e40871522fec015",
+  "parentCheckpoint": "8a16ad6fd49fad73774c7606240d22fe203bcf35",
+  "changes": [
+    {
+      "path": "voicely-n8n-suite-backend/src/http.mjs",
+      "before": "020c0d1922c96c7a21ee092daa9c0fed1301b4e7f0d2246f9351b437c0af1839",
+      "after": "979c40cf143b34e69fb6daecd5bfbaa9a5bab4a19b68de990ab70290bb2d541d"
+    },
+    {
+      "path": "voicely-n8n-suite-backend/src/metadata.mjs",
+      "before": "f0b11346552bcb889fcc29f33633ec7f37536b24a510196e1cad60aee70babe3",
+      "after": "bbd154b712283a838e25437426fa3291379d514509e274a80f03416110fb0568"
+    },
+    {
+      "path": "voicely-n8n-suite-backend/src/service.mjs",
+      "before": "183f461af1a0ab91843f3796d4fd3ce96805df965a71f82dd5b4270445381859",
+      "after": "8b3729a1d1604cda009d1b98934471f5868a06772c00fbae93a6f2ca54ea28e4"
+    },
+    {
+      "path": "voicely-n8n-suite-backend/test/modelLanguageDiscovery.test.mts",
+      "before": null,
+      "after": "205e6f55c4b0299a789a47cf70d70907fc447705ccac15b86c064777565bc7c3"
+    },
+    {
+      "path": "voicely-n8n-suite-backend/test/nodeLanguageDiscovery.test.mts",
+      "before": null,
+      "after": "122d00769d158b9ea51bfed27f9994b598e9b1ef1c94720205f37738efda29f4"
+    }
+  ]
+}

@@ -1,0 +1,339 @@
+{
+  "id": "@voicelystudio/n8n-nodes-voicely@0.2.1",
+  "name": "@voicelystudio/n8n-nodes-voicely",
+  "version": "0.2.1",
+  "size": 62345,
+  "unpackedSize": 300409,
+  "shasum": "f4af4e7c651ad107a6266a41c27b110bb02563db",
+  "integrity": "sha512-CfyJfo5Xqj7dOVci9kG1e1YcCwjCw3jFn8Oko31rUWYoK/pbuoj4LJZi4I8wQ6kG+DJyT4pmQn5Es9ARDjKeQQ==",
+  "filename": "voicelystudio-n8n-nodes-voicely-0.2.1.tgz",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "size": 3725,
+      "mode": 420
+    },
+    {
+      "path": "LICENSE.md",
+      "size": 1071,
+      "mode": 420
+    },
+    {
+      "path": "MODEL-LANGUAGE-VOICE-UAT.md",
+      "size": 3840,
+      "mode": 420
+    },
+    {
+      "path": "README.md",
+      "size": 15720,
+      "mode": 420
+    },
+    {
+      "path": "dist/credentials/VoicelyApi.credentials.d.ts",
+      "size": 383,
+      "mode": 420
+    },
+    {
+      "path": "dist/credentials/VoicelyApi.credentials.js",
+      "size": 1364,
+      "mode": 420
+    },
+    {
+      "path": "dist/credentials/VoicelyApi.credentials.js.map",
+      "size": 896,
+      "mode": 420
+    },
+    {
+      "path": "dist/credentials/VoicelyAutomationApi.credentials.d.ts",
+      "size": 393,
+      "mode": 420
+    },
+    {
+      "path": "dist/credentials/VoicelyAutomationApi.credentials.js",
+      "size": 2138,
+      "mode": 420
+    },
+    {
+      "path": "dist/credentials/VoicelyAutomationApi.credentials.js.map",
+      "size": 1258,
+      "mode": 420
+    },
+    {
+      "path": "dist/credentials/VoicelySuiteApi.credentials.d.ts",
+      "size": 388,
+      "mode": 420
+    },
+    {
+      "path": "dist/credentials/VoicelySuiteApi.credentials.js",
+      "size": 1350,
+      "mode": 420
+    },
+    {
+      "path": "dist/credentials/VoicelySuiteApi.credentials.js.map",
+      "size": 907,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/transport.d.ts",
+      "size": 636,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/transport.js",
+      "size": 5087,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/transport.js.map",
+      "size": 5048,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/voicely.svg",
+      "size": 161,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/VoicelyV1.node.d.ts",
+      "size": 545,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/VoicelyV1.node.js",
+      "size": 13658,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/VoicelyV1.node.js.map",
+      "size": 9982,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/websocket.d.ts",
+      "size": 476,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/websocket.js",
+      "size": 7991,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v1/websocket.js.map",
+      "size": 6702,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/automation.d.ts",
+      "size": 309,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/automation.js",
+      "size": 15218,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/automation.js.map",
+      "size": 12306,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/discovery.d.ts",
+      "size": 1120,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/discovery.js",
+      "size": 7954,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/discovery.js.map",
+      "size": 7091,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/options.d.ts",
+      "size": 386,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/options.js",
+      "size": 842,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/options.js.map",
+      "size": 945,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/properties.d.ts",
+      "size": 105,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/properties.js",
+      "size": 22733,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/properties.js.map",
+      "size": 14330,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/transport.d.ts",
+      "size": 1003,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/transport.js",
+      "size": 4822,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/transport.js.map",
+      "size": 4304,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/voicely.svg",
+      "size": 161,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/VoicelyV2.node.d.ts",
+      "size": 811,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/VoicelyV2.node.js",
+      "size": 28092,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/VoicelyV2.node.js.map",
+      "size": 22217,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/websocket.d.ts",
+      "size": 539,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/websocket.js",
+      "size": 8343,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/v2/websocket.js.map",
+      "size": 6920,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/Voicely.node.d.ts",
+      "size": 128,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/Voicely.node.js",
+      "size": 851,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/Voicely.node.js.map",
+      "size": 539,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/Voicely.node.json",
+      "size": 488,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/Voicely/voicely.svg",
+      "size": 161,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/VoicelyAgentsTrigger/transport.d.ts",
+      "size": 378,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/VoicelyAgentsTrigger/transport.js",
+      "size": 2270,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/VoicelyAgentsTrigger/transport.js.map",
+      "size": 1866,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/VoicelyAgentsTrigger/voicely.svg",
+      "size": 161,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.d.ts",
+      "size": 744,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.js",
+      "size": 12226,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.js.map",
+      "size": 9573,
+      "mode": 420
+    },
+    {
+      "path": "dist/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.json",
+      "size": 339,
+      "mode": 420
+    },
+    {
+      "path": "examples/studio-v2-model-language-voice-discovery.json",
+      "size": 2381,
+      "mode": 420
+    },
+    {
+      "path": "migration/convert.mjs",
+      "size": 8173,
+      "mode": 420
+    },
+    {
+      "path": "migration/index.html",
+      "size": 2660,
+      "mode": 420
+    },
+    {
+      "path": "migration/page.mjs",
+      "size": 78,
+      "mode": 420
+    },
+    {
+      "path": "migration/ui.mjs",
+      "size": 7665,
+      "mode": 420
+    },
+    {
+      "path": "migration/upgrade-v020.mjs",
+      "size": 3701,
+      "mode": 420
+    },
+    {
+      "path": "package.json",
+      "size": 1757,
+      "mode": 420
+    }
+  ],
+  "entryCount": 65,
+  "bundled": []
+}

@@ -1,0 +1,17 @@
+{
+  "nodeFilesChanged": 11,
+  "suiteFilesChanged": 5,
+  "nodeSourceCheckpoint": "ff1c7ff727ee14524eb0e9341e092801b35c6040",
+  "suiteSourceCheckpoint": "63240f99aacdb302d45e9daa4e40871522fec015",
+  "packageSha256": "ff4804c09882cbe8ca6691ab627b1fdcf6ef500f6a2a286686c4b4a3e176fc89",
+  "runtimeProtectedHashes": "evidence/PROTECTED-RUNTIME.json",
+  "apiContractPureInputs": "byte-identical to accepted parent",
+  "selectedSuiteTests": 176,
+  "selectedSuitePass": 175,
+  "selectedSuiteFail": 1,
+  "additionalFocusedWireTests": 13,
+  "focusedNodeCasesAdded": 15,
+  "newUniqueBackendCasesAdded": 13,
+  "providerVerification": "NOT PERFORMED",
+  "ownerUat": "REQUIRED"
+}
