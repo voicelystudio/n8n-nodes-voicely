@@ -1,0 +1,17 @@
+{
+  "sourceCheckpoint": "c9d8fc988a44de51ac8c2cebc4e7b4ed1f8f9b5a",
+  "filename": "voicelystudio-n8n-nodes-voicely-0.2.1.tgz",
+  "file": "/home/myeduprojects/n8n-nodes-voicely-review-v021-20261103T140631Z/voicelystudio-n8n-nodes-voicely-0.2.1.tgz",
+  "sha256": "f7f71dca09f2c7120ee11a8718b53443f744773459c609409841db7a3e98bcec",
+  "fileCount": 66,
+  "bytes": 64155,
+  "nodeTests": {
+    "total": 220,
+    "pass": 220,
+    "fail": 0,
+    "skip": 0
+  },
+  "build": "PASS",
+  "lint": "PASS",
+  "providerCalls": 0
+}

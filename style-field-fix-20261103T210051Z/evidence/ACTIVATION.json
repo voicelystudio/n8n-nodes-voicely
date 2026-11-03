@@ -1,0 +1,20 @@
+{
+  "utc": "2026-11-03T21:06:07.735068+00:00",
+  "status": "ACTIVATED",
+  "editor": "http://localhost:5680",
+  "process": "voicely-n8n-review-v021-dev",
+  "oldPid": 387853,
+  "newPid": 390113,
+  "sourceCheckpoint": "c9d8fc988a44de51ac8c2cebc4e7b4ed1f8f9b5a",
+  "packageSha256": "f7f71dca09f2c7120ee11a8718b53443f744773459c609409841db7a3e98bcec",
+  "previousPackageSha256": "521f60ceeeab6010581dcddc057333ff2f3349bdc05548663cdb3469314a7f40",
+  "rollbackPackage": "/home/myeduprojects/n8n-nodes-voicely-review-v021-20261103T140631Z/uat-editor-20261103T143539Z/style-field-rollback-previous-package",
+  "currentPackage": "/home/myeduprojects/n8n-nodes-voicely-review-v021-20261103T140631Z/uat-editor-20261103T143539Z/user/.n8n/nodes/node_modules/@voicelystudio/n8n-nodes-voicely",
+  "otherProcessChanges": [],
+  "suiteRestarted": false,
+  "workflowEdits": false,
+  "credentialValuesRead": false,
+  "providerCalls": 0,
+  "productionAccessed": false,
+  "actualAuthenticatedOwnerPanel": "OWNER UAT PENDING"
+}
