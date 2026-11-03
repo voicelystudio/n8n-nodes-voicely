@@ -13,3 +13,7 @@ Backend26focusedcases pass, including actual n8n nativeWSclient→loopbackSuite 
 Canonical TTS supports the existing public stock voices, matching the accepted Public API contract; owned/native/cloned voice workflows remain on legacy routes and are not silently converted. Authentication, billing units, credit rules, original V1 package behavior and production remain unchanged.
 
 This package requires coordinated Suite /v2 backend support before production publication. It must not be published against an unupdated production Suite by implication. Current staging UAT activation evidence follows after validation; npm/GitHub publication not performed.
+
+## Activation complete
+
+Sourcef99c4b7 is active in existing review editor5680, paired with Suite sourcee381901. Exact activation evidence, seven-model table and recovery: `/home/myeduprojects/n8n-suite-model-parity-20261103T155526Z/ACTIVATION.md`. Owner login/credentials/workflows retained; no paid inference or production modification.
