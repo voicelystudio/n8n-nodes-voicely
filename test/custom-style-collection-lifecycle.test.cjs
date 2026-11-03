@@ -1,0 +1,16 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const {Voicely}=require('../dist/nodes/Voicely/Voicely.node'),{NodeHelpers}=require('n8n-workflow');
+const {STYLE_MODEL_IDS}=require('../dist/nodes/Voicely/v2/discovery');const description=new Voicely().getNodeType(2).description;
+function lifecycle(parameters,d=description){const node={id:'fixture',name:'Voicely Studio',type:d.name,typeVersion:2,parameters};const stored=NodeHelpers.getNodeParameters(d.properties,parameters,false,false,node,d);return {stored,rendered:NodeHelpers.getNodeParameters(d.properties,stored,true,false,{...node,parameters:stored},d)};}
+const params=(id,styleInstructions)=>({additionalOptions:{apiModel:{__rl:true,mode:'list',value:id},styleInstructions},voice:{__rl:true,mode:'list',value:'vly_f08'},text:'Synthetic fixture'});
+test('reproduces original dropdown-visible but empty textarea discarded by absolute self-collection condition',()=>{
+ const broken=structuredClone(description),field=broken.properties.find(p=>p.name==='additionalOptions').options.find(p=>p.name==='styleInstructions');field.displayOptions.show['/additionalOptions.apiModel.value']=field.displayOptions.show['apiModel.value'];delete field.displayOptions.show['apiModel.value'];const raw=params(STYLE_MODEL_IDS[0],'');const root={resource:'speech',operation:'textToSpeech',...raw};assert.equal(NodeHelpers.displayParameter(root.additionalOptions,field,{parameters:root,typeVersion:2},broken,root),true);assert.equal(Object.hasOwn(lifecycle(raw,broken).rendered.additionalOptions,'styleInstructions'),false);
+});
+test('actual cleanup/default/render passes preserve selected empty and typed field for all six models, both locator modes and omitted defaults',()=>{
+ for(const id of STYLE_MODEL_IDS)for(const mode of ['list','id'])for(const style of ['', 'Warm and confident', '={{ $json.deliveryStyle }}'])for(const defaults of [{},{resource:'speech',operation:'textToSpeech'}]){const p={...params(id,style),...defaults};p.additionalOptions.apiModel.mode=mode;const out=lifecycle(p);assert.equal(out.stored.additionalOptions.styleInstructions,style);assert.equal(out.rendered.additionalOptions.styleInstructions,style);assert.equal(out.rendered.additionalOptions.apiModel.value,id);}
+});
+test('supported-model switch keeps entered instructions; HD/STT/STS remove unsupported optional field through standard editor cleanup',()=>{
+ const original=params(STYLE_MODEL_IDS[0],'Warm and confident');for(const id of STYLE_MODEL_IDS){const p=structuredClone(original);p.additionalOptions.apiModel.value=id;assert.equal(lifecycle(p).stored.additionalOptions.styleInstructions,'Warm and confident');}
+ for(const patch of [{additionalOptions:{...original.additionalOptions,apiModel:{__rl:true,mode:'list',value:'voicely-tts-hd-v1'}}},{operation:'speechToText'},{operation:'speechToSpeech'}])assert.equal(Object.hasOwn(lifecycle({...original,...patch}).rendered.additionalOptions,'styleInstructions'),false);
+});
+test('expression-selected canonical model keeps the optional field before per-item runtime capability validation',()=>{const p=params('={{ $json.model_id }}','Warm');assert.equal(lifecycle(p).rendered.additionalOptions.styleInstructions,'Warm');});

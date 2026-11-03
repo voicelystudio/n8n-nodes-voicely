@@ -93,7 +93,7 @@ export const properties: INodeProperties[] = [
         displayOptions: {
           show: {
             "/operation": ["textToSpeech"],
-            "/additionalOptions.apiModel.value": [
+            "apiModel.value": [
               ...STYLE_MODEL_IDS,
               { _cnd: { startsWith: "=" } },
             ],
