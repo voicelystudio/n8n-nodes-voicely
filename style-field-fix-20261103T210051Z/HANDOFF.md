@@ -45,3 +45,7 @@ The agent did not generate audio. Audible style behavior/provider limits remain 
 ## Recovery
 
 Package rollback: stop only the review editor while idle; preserve current package, restore `/home/myeduprojects/n8n-nodes-voicely-review-v021-20261103T140631Z/uat-editor-20261103T143539Z/style-field-rollback-previous-package` to `/home/myeduprojects/n8n-nodes-voicely-review-v021-20261103T140631Z/uat-editor-20261103T143539Z/user/.n8n/nodes/node_modules/@voicelystudio/n8n-nodes-voicely`, restart that editor and verify readiness. Do not reset/delete the editor SQLite DB or credentials. Previous Suite/runtime remains active throughout. Raw properties-before.ts kept locally; losslessgzip source backup and reversible fix.patch.gz are versioned. Exact before/afterSHA256 is in SOURCE-CHANGES.json. No PM2save or production action.
+
+## Later owner acceptance
+
+2026-11-03T21:46:37.865506+00:00: Owner confirmed the Custom Style field UAT and then the tested end-to-end staging workflow PASS. See OWNER-UAT-ACCEPTANCE.md. This supersedes the workflow-UAT-pending status above for that tested workflow; it does not certify every model/language, independently clear billing/provider-budget checks or authorize production/publication. No application or service change accompanies this update.
