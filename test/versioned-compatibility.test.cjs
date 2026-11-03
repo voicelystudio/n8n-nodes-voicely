@@ -32,18 +32,18 @@ test('legacy behavior and credentials match the verified v0.1.1 source, apart fr
  }
 });
 
-test('one same-name package registers exactly Studio, Agents and Trigger with no duplicate legacy node', () => {
+test('one same-name package registers exactly one Studio regular node and its Trigger with no duplicate legacy node', () => {
  const manifest = require('../package.json');
  assert.equal(manifest.name,'@voicelystudio/n8n-nodes-voicely');
- assert.equal(manifest.version,'0.2.0');
+ assert.equal(manifest.version,'0.2.1');
  assert.notEqual(manifest.private,true);
- assert.equal(manifest.n8n.nodes.length,3);
+ assert.equal(manifest.n8n.nodes.length,2);
  const names=manifest.n8n.nodes.map(file=>{
   const exports=require(path.join(root,file));
   const Node=Object.values(exports)[0];
   return new Node().description.name;
  });
- assert.deepEqual(names,['voicely','voicelyAgents','voicelyAgentsTrigger']);
+ assert.deepEqual(names,['voicely','voicelyAgentsTrigger']);
  assert.equal(manifest.dependencies,undefined);
 });
 

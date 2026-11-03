@@ -26,9 +26,10 @@
         "resource": "voice",
         "operation": "getAll",
         "returnAll": true,
-        "pageSize": 50,
-        "simplify": true,
-        "requestTimeoutMs": 0
+        "options": {
+          "simplify": true,
+          "requestTimeoutMs": 0
+        }
       }
     }
   ],

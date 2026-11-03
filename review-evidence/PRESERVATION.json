@@ -1,0 +1,53 @@
+{
+  "protectedPackageInputs": [
+    {
+      "path": "nodes/Voicely/v1/VoicelyV1.node.ts",
+      "unchanged": true,
+      "sha256": "e042ef78fd0c49c713138b7f32049e4f2dd4a63f567ce638161ac49785fe1b07"
+    },
+    {
+      "path": "nodes/Voicely/v1/transport.ts",
+      "unchanged": true,
+      "sha256": "eaacb216ade0e933a11c5f06da5ef6cc4bc976ff09bc09b5d48f751f3f5e7d89"
+    },
+    {
+      "path": "nodes/Voicely/v1/websocket.ts",
+      "unchanged": true,
+      "sha256": "743552d080c4a66325f7c4c1bc36debb39e636bbe32e3b231d907a8ad68c5065"
+    },
+    {
+      "path": "nodes/Voicely/v2/transport.ts",
+      "unchanged": true,
+      "sha256": "eaf4c2c13f241eddccc5a20d8476c0094f161c8a6984844369c38df55f1ed07c"
+    },
+    {
+      "path": "nodes/Voicely/v2/websocket.ts",
+      "unchanged": true,
+      "sha256": "6d7dda3d18432425f879b00b943e960040e09b30d152a42eee2312a8258e3bc1"
+    },
+    {
+      "path": "credentials/VoicelyApi.credentials.ts",
+      "unchanged": true,
+      "sha256": "55590dc85572c711691d981d63990eec6034da2c025c8fe59438568892bf7312"
+    },
+    {
+      "path": "credentials/VoicelySuiteApi.credentials.ts",
+      "unchanged": true,
+      "sha256": "f9576ab2ea38c8d372461e298ce4a9309b1ba881769ee7a22f96622c2ada59b2"
+    },
+    {
+      "path": "credentials/VoicelyAutomationApi.credentials.ts",
+      "unchanged": true,
+      "sha256": "3627499a0c9ccadaf6ae80a531b6e7c3e19678b945452e28f39f37ea05455362"
+    }
+  ],
+  "releaseV020Head": "be48a6e1aa2e1d67bf544fd0c16256d535afbace",
+  "releaseV020Clean": true,
+  "webMainHead": "8fd416a0241ee0eeb27405827098f3e451de72f1",
+  "webMainPorcelainSha256": "345d26b80d8a3846226dd256552ff64c5a50fd5691749315d77033601543a0c5",
+  "installedEditorPackageVersion": "0.2.0",
+  "servicesChanged": false,
+  "paidCalls": 0,
+  "databaseAccess": false,
+  "publishOrPush": false
+}

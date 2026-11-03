@@ -10,6 +10,8 @@ import type {
   INodeTypeDescription,
 } from "n8n-workflow";
 import { properties } from "./properties";
+import { automationResourceIds, executeAutomation } from "./automation";
+import { executionOption } from "./options";
 import { websocketRequest } from "./websocket";
 import {
   asObject,
@@ -97,12 +99,23 @@ export class VoicelyV2 implements INodeType {
     group: ["transform"],
     subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
     version: 2,
-    description: "Speech, transcription and owned voices with Voicely",
+    description: "Speech, voices, agents and call automation with Voicely",
     defaults: { name: "Voicely Studio" },
     inputs: [NodeConnectionTypes.Main],
     outputs: [NodeConnectionTypes.Main],
     usableAsTool: true,
-    credentials: [{ name: "voicelySuiteApi", required: true }],
+    credentials: [
+      {
+        name: "voicelySuiteApi",
+        required: true,
+        displayOptions: { show: { resource: ["speech", "voice"] } },
+      },
+      {
+        name: "voicelyAutomationApi",
+        required: true,
+        displayOptions: { show: { resource: automationResourceIds } },
+      },
+    ],
     properties,
   };
   methods = {
@@ -182,6 +195,12 @@ export class VoicelyV2 implements INodeType {
     },
   };
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+    if (
+      automationResourceIds.includes(
+        String(this.getNodeParameter("resource", 0)),
+      )
+    )
+      return executeAutomation.call(this);
     const input = this.getInputData(),
       output: INodeExecutionData[] = [];
     for (let index = 0; index < input.length; index++) {
@@ -191,7 +210,7 @@ export class VoicelyV2 implements INodeType {
         const resource = String(this.getNodeParameter("resource", index)),
           operation = String(this.getNodeParameter("operation", index));
         const timeout = Number(
-          this.getNodeParameter("requestTimeoutMs", index, 0),
+          executionOption(this, index, "requestTimeoutMs", 0),
         );
         if (!Number.isSafeInteger(timeout) || timeout < 0)
           throw Error("timeout_invalid");
@@ -204,7 +223,7 @@ export class VoicelyV2 implements INodeType {
             ? speechSettings(parameters, operation)
             : undefined;
         const business = String(
-          this.getNodeParameter("operationIdentity", index, ""),
+          executionOption(this, index, "operationIdentity", ""),
         );
         operationId = /^op_[a-f0-9]{64}$/.test(business)
           ? business
@@ -245,10 +264,8 @@ export class VoicelyV2 implements INodeType {
             limit = returnAll
               ? undefined
               : positiveInteger(this.getNodeParameter("limit", index)),
-            pageSize = positiveInteger(
-              this.getNodeParameter("pageSize", index, 50),
-            ),
-            simplify = Boolean(this.getNodeParameter("simplify", index, true));
+            pageSize = 50,
+            simplify = Boolean(executionOption(this, index, "simplify", true));
           let after: string | null = null,
             remaining = limit;
           const seen = new Set<string>(),
@@ -300,7 +317,7 @@ export class VoicelyV2 implements INodeType {
           output.push({
             json:
               operation === "get" &&
-              Boolean(this.getNodeParameter("simplify", index, true))
+              Boolean(executionOption(this, index, "simplify", true))
                 ? publicVoice(data)
                 : data,
             pairedItem,
@@ -416,7 +433,7 @@ export class VoicelyV2 implements INodeType {
         } else throw Error("operation_unsupported");
         const transport =
           resource === "speech" && operation === "textToSpeech"
-            ? String(this.getNodeParameter("speechTransport", index, "http"))
+            ? String(executionOption(this, index, "speechTransport", "http"))
             : "http";
         if (!["http", "websocket"].includes(transport))
           throw Error("transport_invalid");

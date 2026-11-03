@@ -2,21 +2,20 @@
 
 Create speech, transcribe recordings, convert voices, and connect Voicely Calling Agents to business workflows.
 
-`@voicelystudio/n8n-nodes-voicely` contains three node types in one package:
+`@voicelystudio/n8n-nodes-voicely` contains one regular node and one companion trigger:
 
 | Node | What it does |
 | --- | --- |
-| **Voicely Studio** | Text-to-speech over HTTP or WebSocket, speech-to-text, speech-to-speech, voice catalog and consented voice-profile management. Audio output is binary data for downstream nodes. |
-| **Voicely Agents** | Discover agents, retrieve completed calls and permitted shared details, register business tools, and inspect or redeliver automation events. |
+| **Voicely Studio** | Speech and Voice resources handle HTTP/WebSocket TTS, STT, STS and consented voice profiles. Agent, Call, Delivery, Subscription and Tool resources handle discovery, permitted call details, tool registration and automation events. Audio output remains binary data. |
 | **Voicely Agents Trigger** | Receive authenticated, signed completed-call events for post-call workflows. |
 
 [Voicely integration guide](https://tryvoicely.com/integrations/n8n) · [Account and API access](https://tryvoicely.com/api-access)
 
 ## Installation and upgrades
 
-For a self-hosted n8n instance, install `@voicelystudio/n8n-nodes-voicely` from **Settings → Community nodes**, following your administrator's package policy. n8n Cloud availability follows n8n's review and release process. Version 0.1.1 was verified; its status does not automatically certify the expanded 0.2.0 features.
+For a self-hosted n8n instance, install `@voicelystudio/n8n-nodes-voicely` from **Settings → Community nodes**, following your administrator's package policy. n8n Cloud availability follows n8n's review and release process. Version 0.1.1 was verified; its status does not automatically certify the expanded features. Version 0.2.1 is a review-correction candidate until separately published and approved.
 
-Version 0.2.0 retains the original `voicely` node identity. Saved node version 1 workflows keep their original operations, **Voicely API** credentials and service URLs. Fresh Studio nodes use node version 2. Package version 0.2.0 and Studio node version 2 are different version numbers. Updating the package does not convert workflows, move credentials between hosts or transfer balances.
+Version 0.2.0 retains the original `voicely` node identity. Saved node version 1 workflows keep their original operations, **Voicely API** credentials and service URLs. Fresh Studio nodes use node version 2. Package version 0.2.1 and Studio node version 2 are different version numbers. Updating the package does not convert workflows, move credentials between hosts or transfer balances.
 
 ## Credentials
 
@@ -24,8 +23,8 @@ Sign in to [Voicely API access](https://tryvoicely.com/api-access), create an AP
 
 | Credential | Service URL | Use |
 | --- | --- | --- |
-| **Voicely Studio API** | `https://n8n-suite.tryvoicely.com` | Studio node version 2 |
-| **Voicely Agents API** | `https://n8n-suite.tryvoicely.com` | Agents and Agents Trigger |
+| **Voicely Studio API** | `https://n8n-suite.tryvoicely.com` | Studio v2 Speech and Voice resources |
+| **Voicely Agents API** | `https://n8n-suite.tryvoicely.com` | Studio v2 Agent/Call/Delivery/Subscription/Tool resources and Agents Trigger |
 | **Voicely API** | `https://n8n.tryvoicely.com` | Existing node version 1 workflows |
 
 Staging accounts and keys belong to their staging service; do not mix environments. Existing speech keys do not automatically gain agent, tool or automation permissions.
@@ -52,9 +51,9 @@ Existing [HTTP speech](examples/http-speech.json), [WebSocket speech](examples/w
 
 ## Calling Agent business tools
 
-Use the [Calling order lookup and verification example](examples/calling-order-verification/README.md) for a complete 17-node workflow and synthetic setup data. It uses standard n8n nodes and is invoked by a Voicely Calling Agent; it is not a combined canvas of the three custom Voicely nodes. Importing it does not provision an agent, initiate a call or allocate credits.
+Use the [Calling order lookup and verification example](examples/calling-order-verification/README.md) for a complete 17-node workflow and synthetic setup data. It uses standard n8n nodes and is invoked by a Voicely Calling Agent; it is not a combined canvas of the custom Voicely nodes. Importing it does not provision an agent, initiate a call or allocate credits.
 
-Register typed tools through **Voicely Agents → Tool** with input/result schemas and the workflow's public HTTPS webhook. Configure the matching signing credential inside that workflow. Read-only lookups, confirmed writes, verified-caller access and escalation notifications have distinct contracts. The live agent receives the authoritative structured result after the business workflow completes. A webhook HTTP acceptance alone does not prove a CRM or database action completed.
+Register typed tools through **Voicely Studio → Tool** with input/result schemas and the workflow's public HTTPS webhook. Configure the matching signing credential inside that workflow. Read-only lookups, confirmed writes, verified-caller access and escalation notifications have distinct contracts. The live agent receives the authoritative structured result after the business workflow completes. A webhook HTTP acceptance alone does not prove a CRM or database action completed.
 
 Publish/activate the business workflow for its persistent production webhook URL. Keep the examples inactive until you have selected your own credentials, table and tool configuration. Use synthetic data for initial tests.
 
@@ -68,15 +67,29 @@ Publish/activate the business workflow for its persistent production webhook URL
 
 The Trigger manages its subscription automatically. Normal use does not require copying a subscription ID. Self-hosted reverse proxies must forward the generated POST callback paths to n8n, preserving headers and raw request bytes. They must not be limited to an old node UUID. Depending on your n8n version, configure `N8N_WEBHOOK_URL` or `WEBHOOK_URL` as appropriate; verify the actual test and production URLs shown in your editor. Exposing callback paths does not require exposing the editor or REST API.
 
-Events are HMAC signed with timestamp validation. Keep the raw body intact and deduplicate downstream business actions by `event_id`, because retries/redeliveries can contain the same event. Delivery happens independently after call settlement. Use **Voicely Agents → Delivery** to inspect attempts or request a controlled redelivery. A completed call can remain successfully settled even if the receiving workflow is unavailable.
+Events are HMAC signed with timestamp validation. Keep the raw body intact and deduplicate downstream business actions by `event_id`, because retries/redeliveries can contain the same event. Delivery happens independently after call settlement. Use **Voicely Studio → Delivery** to inspect attempts or request a controlled redelivery. A completed call can remain successfully settled even if the receiving workflow is unavailable.
 
 ## Retry safety and workflow migration
+
+Under **Options**, speech operations expose an Operation Identity and Request Timeout. Speech Transport and voice Simplify are also optional settings. Call Get exposes Include Shared Data under Options; Trigger Options contains Request Timeout and Include Setup Test Events. Get Many uses Return All and Limit; page size is chosen internally (50 per paginated request, reduced for the remaining limit). Agent discovery applies the selected limit to its single-list service response.
 
 Speech operations expose an operation identity. Reuse it only for the same intended operation when recovering an uncertain response. Use a new identity for new work. Avoid automatic retries of uncertain writes; inspect the authoritative result first.
 
 The [workflow converter](migration/index.html) runs locally in your browser when served as static files. It reviews supported speech/voice mappings and produces a new inactive workflow; it does not upload your file or request a key. Map actual Voicely voice/model IDs, bind credentials privately, review the report and test before activation. Dynamic mappings require account-side configuration. It does not transfer private voices, balances or third-party permissions, and it is not a universal credential scrubber. Review custom code and linked workflows separately.
 
 Examples are available in this GitHub repository; they are not bundled inside the npm package. The migration utility is bundled.
+
+## Upgrading workflows created with package 0.2.0
+
+Version 0.2.1 consolidates the former **Voicely Agents** regular node into Studio v2 resources, as required by n8n review. Its standalone node type is no longer registered. The companion Trigger keeps its existing identity. Existing V1 workflows are unchanged.
+
+Before replacing 0.2.0, export affected workflows. The pure offline transformer [upgrade-v020.mjs](migration/upgrade-v020.mjs) changes only the known Voicely 0.2.0 node shapes: it maps the old Agents type to Studio v2, retains node IDs/names/connections and credential references, moves optional fields into Options, and removes the Page Size setting. It returns a new **inactive** workflow without the original workflow ID, pinned data or trigger registration state. Review/rebind credentials and register triggers for the new copy before activation. It does not upload files, call services, update the live editor or read credentials.
+
+Call `upgradeV020Workflow(exportedWorkflow)` from a local module importing that file. The result contains `ok`, `workflow`, `changes`, `issues` and `requirements`. Conflicting new/legacy option values produce no migrated workflow. Review and import the returned workflow only when `ok` is true. Keep the original export for recovery; this utility is not a general secret scrubber.
+
+Old Studio/Trigger saved optional values have an execution-time fallback while the new Options field is absent. Explicit Options values take precedence, including zero and false. Migrate exported 0.2.0 workflows before editing/resaving them: editor normalization may drop unrepresented legacy fields. Never upgrade V1 to V2 by merely changing its version number.
+
+A credential-free [Agent catalog example](examples/studio-v2-agent-catalog.json) shows the consolidated resource and requires an explicit Agents credential selection before execution.
 
 ## Development and license
 

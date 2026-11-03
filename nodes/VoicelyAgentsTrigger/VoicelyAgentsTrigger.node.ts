@@ -12,6 +12,7 @@ import type {
 } from "n8n-workflow";
 import { selectedId } from "../Voicely/v2/transport";
 import { automationRequest } from "./transport";
+import { hookOption } from "../Voicely/v2/options";
 type Registration = {
   id: string;
   agent: string;
@@ -86,21 +87,31 @@ export class VoicelyAgentsTrigger implements INodeType {
           { displayName: "By ID", name: "id", type: "string" },
         ],
       },
+
       {
-        displayName: "Request Timeout (Ms)",
-        name: "requestTimeoutMs",
-        type: "number",
-        default: 0,
-        description:
-          "Timeout for registration requests. Zero adds no client deadline; the service still applies its configured limits.",
-      },
-      {
-        displayName: "Include Setup Test Events",
-        name: "includeSynthetic",
-        type: "boolean",
-        default: true,
-        description:
-          "Whether to emit clearly marked synthetic setup events. Templates must keep these separate from business writes.",
+        displayName: "Options",
+        name: "options",
+        type: "collection",
+        default: {},
+        placeholder: "Add Option",
+        options: [
+          {
+            displayName: "Include Setup Test Events",
+            name: "includeSynthetic",
+            type: "boolean",
+            default: true,
+            description:
+              "Whether to emit clearly marked synthetic setup events. Templates must keep these separate from business writes.",
+          },
+          {
+            displayName: "Request Timeout (Ms)",
+            name: "requestTimeoutMs",
+            type: "number",
+            default: 0,
+            description:
+              "Timeout for registration requests. Zero adds no client deadline; the service still applies its configured limits.",
+          },
+        ],
       },
     ],
   };
@@ -323,7 +334,7 @@ export class VoicelyAgentsTrigger implements INodeType {
         return refuse(400, "voicely_event_invalid");
       if (
         body.synthetic === true &&
-        !this.getNodeParameter("includeSynthetic", true)
+        !hookOption(this, "includeSynthetic", true)
       ) {
         this.getResponseObject()
           .status(200)

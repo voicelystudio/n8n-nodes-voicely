@@ -11,7 +11,7 @@ export class Voicely extends VersionedNodeType {
         name: "voicely",
         icon: { light: "file:voicely.svg", dark: "file:voicely.svg" },
         group: ["transform"],
-        description: "Speech, transcription and owned voices with Voicely",
+        description: "Speech, voices, agents and call automation with Voicely",
         defaultVersion: 2,
         usableAsTool: true,
       },

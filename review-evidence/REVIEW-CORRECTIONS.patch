@@ -1,0 +1,2050 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index cf08ee1..96ed600 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,15 @@
+ # Changelog
+ 
++## 0.2.1 (2026-11-03) — review-correction candidate
++
++- Consolidate the standalone Agents action into Studio v2 Agent, Call, Delivery, Subscription and Tool resources; retain the companion signed-event Trigger.
++- Select Studio or Agents credentials by resource without changing service endpoints, billing or V1 contracts.
++- Remove Page Size from Get Many; keep Return All/Limit and internal pagination, including agent-list limits.
++- Move optional request identity, timeout, shared-call data, tool policy, transport and simplification settings into Options, with saved-value execution fallbacks and an explicit offline 0.2.0 migration helper.
++- Move Trigger timeout and setup-event settings into Options.
++- Set Studio codex metadata nodeVersion to 1.0 per reviewer; runtime node versions 1 and 2 remain unchanged.
++- Add focused structural, pagination, credential, option-precedence and workflow-migration regression coverage. No live-service or provider change.
++
+ ## 0.2.0 (2026-10-30)
+ 
+ - Add Voicely Studio node version 2 for HTTP/WebSocket text-to-speech, speech-to-text, speech-to-speech and consented voice-profile management.
+diff --git a/README.md b/README.md
+index aba345d..7ae5d40 100644
+--- a/README.md
++++ b/README.md
+@@ -2,21 +2,20 @@
+ 
+ Create speech, transcribe recordings, convert voices, and connect Voicely Calling Agents to business workflows.
+ 
+-`@voicelystudio/n8n-nodes-voicely` contains three node types in one package:
++`@voicelystudio/n8n-nodes-voicely` contains one regular node and one companion trigger:
+ 
+ | Node | What it does |
+ | --- | --- |
+-| **Voicely Studio** | Text-to-speech over HTTP or WebSocket, speech-to-text, speech-to-speech, voice catalog and consented voice-profile management. Audio output is binary data for downstream nodes. |
+-| **Voicely Agents** | Discover agents, retrieve completed calls and permitted shared details, register business tools, and inspect or redeliver automation events. |
++| **Voicely Studio** | Speech and Voice resources handle HTTP/WebSocket TTS, STT, STS and consented voice profiles. Agent, Call, Delivery, Subscription and Tool resources handle discovery, permitted call details, tool registration and automation events. Audio output remains binary data. |
+ | **Voicely Agents Trigger** | Receive authenticated, signed completed-call events for post-call workflows. |
+ 
+ [Voicely integration guide](https://tryvoicely.com/integrations/n8n) · [Account and API access](https://tryvoicely.com/api-access)
+ 
+ ## Installation and upgrades
+ 
+-For a self-hosted n8n instance, install `@voicelystudio/n8n-nodes-voicely` from **Settings → Community nodes**, following your administrator's package policy. n8n Cloud availability follows n8n's review and release process. Version 0.1.1 was verified; its status does not automatically certify the expanded 0.2.0 features.
++For a self-hosted n8n instance, install `@voicelystudio/n8n-nodes-voicely` from **Settings → Community nodes**, following your administrator's package policy. n8n Cloud availability follows n8n's review and release process. Version 0.1.1 was verified; its status does not automatically certify the expanded features. Version 0.2.1 is a review-correction candidate until separately published and approved.
+ 
+-Version 0.2.0 retains the original `voicely` node identity. Saved node version 1 workflows keep their original operations, **Voicely API** credentials and service URLs. Fresh Studio nodes use node version 2. Package version 0.2.0 and Studio node version 2 are different version numbers. Updating the package does not convert workflows, move credentials between hosts or transfer balances.
++Version 0.2.0 retains the original `voicely` node identity. Saved node version 1 workflows keep their original operations, **Voicely API** credentials and service URLs. Fresh Studio nodes use node version 2. Package version 0.2.1 and Studio node version 2 are different version numbers. Updating the package does not convert workflows, move credentials between hosts or transfer balances.
+ 
+ ## Credentials
+ 
+@@ -24,8 +23,8 @@ Sign in to [Voicely API access](https://tryvoicely.com/api-access), create an AP
+ 
+ | Credential | Service URL | Use |
+ | --- | --- | --- |
+-| **Voicely Studio API** | `https://n8n-suite.tryvoicely.com` | Studio node version 2 |
+-| **Voicely Agents API** | `https://n8n-suite.tryvoicely.com` | Agents and Agents Trigger |
++| **Voicely Studio API** | `https://n8n-suite.tryvoicely.com` | Studio v2 Speech and Voice resources |
++| **Voicely Agents API** | `https://n8n-suite.tryvoicely.com` | Studio v2 Agent/Call/Delivery/Subscription/Tool resources and Agents Trigger |
+ | **Voicely API** | `https://n8n.tryvoicely.com` | Existing node version 1 workflows |
+ 
+ Staging accounts and keys belong to their staging service; do not mix environments. Existing speech keys do not automatically gain agent, tool or automation permissions.
+@@ -52,9 +51,9 @@ Existing [HTTP speech](examples/http-speech.json), [WebSocket speech](examples/w
+ 
+ ## Calling Agent business tools
+ 
+-Use the [Calling order lookup and verification example](examples/calling-order-verification/README.md) for a complete 17-node workflow and synthetic setup data. It uses standard n8n nodes and is invoked by a Voicely Calling Agent; it is not a combined canvas of the three custom Voicely nodes. Importing it does not provision an agent, initiate a call or allocate credits.
++Use the [Calling order lookup and verification example](examples/calling-order-verification/README.md) for a complete 17-node workflow and synthetic setup data. It uses standard n8n nodes and is invoked by a Voicely Calling Agent; it is not a combined canvas of the custom Voicely nodes. Importing it does not provision an agent, initiate a call or allocate credits.
+ 
+-Register typed tools through **Voicely Agents → Tool** with input/result schemas and the workflow's public HTTPS webhook. Configure the matching signing credential inside that workflow. Read-only lookups, confirmed writes, verified-caller access and escalation notifications have distinct contracts. The live agent receives the authoritative structured result after the business workflow completes. A webhook HTTP acceptance alone does not prove a CRM or database action completed.
++Register typed tools through **Voicely Studio → Tool** with input/result schemas and the workflow's public HTTPS webhook. Configure the matching signing credential inside that workflow. Read-only lookups, confirmed writes, verified-caller access and escalation notifications have distinct contracts. The live agent receives the authoritative structured result after the business workflow completes. A webhook HTTP acceptance alone does not prove a CRM or database action completed.
+ 
+ Publish/activate the business workflow for its persistent production webhook URL. Keep the examples inactive until you have selected your own credentials, table and tool configuration. Use synthetic data for initial tests.
+ 
+@@ -68,16 +67,30 @@ Publish/activate the business workflow for its persistent production webhook URL
+ 
+ The Trigger manages its subscription automatically. Normal use does not require copying a subscription ID. Self-hosted reverse proxies must forward the generated POST callback paths to n8n, preserving headers and raw request bytes. They must not be limited to an old node UUID. Depending on your n8n version, configure `N8N_WEBHOOK_URL` or `WEBHOOK_URL` as appropriate; verify the actual test and production URLs shown in your editor. Exposing callback paths does not require exposing the editor or REST API.
+ 
+-Events are HMAC signed with timestamp validation. Keep the raw body intact and deduplicate downstream business actions by `event_id`, because retries/redeliveries can contain the same event. Delivery happens independently after call settlement. Use **Voicely Agents → Delivery** to inspect attempts or request a controlled redelivery. A completed call can remain successfully settled even if the receiving workflow is unavailable.
++Events are HMAC signed with timestamp validation. Keep the raw body intact and deduplicate downstream business actions by `event_id`, because retries/redeliveries can contain the same event. Delivery happens independently after call settlement. Use **Voicely Studio → Delivery** to inspect attempts or request a controlled redelivery. A completed call can remain successfully settled even if the receiving workflow is unavailable.
+ 
+ ## Retry safety and workflow migration
+ 
++Under **Options**, speech operations expose an Operation Identity and Request Timeout. Speech Transport and voice Simplify are also optional settings. Call Get exposes Include Shared Data under Options; Trigger Options contains Request Timeout and Include Setup Test Events. Get Many uses Return All and Limit; page size is chosen internally (50 per paginated request, reduced for the remaining limit). Agent discovery applies the selected limit to its single-list service response.
++
+ Speech operations expose an operation identity. Reuse it only for the same intended operation when recovering an uncertain response. Use a new identity for new work. Avoid automatic retries of uncertain writes; inspect the authoritative result first.
+ 
+ The [workflow converter](migration/index.html) runs locally in your browser when served as static files. It reviews supported speech/voice mappings and produces a new inactive workflow; it does not upload your file or request a key. Map actual Voicely voice/model IDs, bind credentials privately, review the report and test before activation. Dynamic mappings require account-side configuration. It does not transfer private voices, balances or third-party permissions, and it is not a universal credential scrubber. Review custom code and linked workflows separately.
+ 
+ Examples are available in this GitHub repository; they are not bundled inside the npm package. The migration utility is bundled.
+ 
++## Upgrading workflows created with package 0.2.0
++
++Version 0.2.1 consolidates the former **Voicely Agents** regular node into Studio v2 resources, as required by n8n review. Its standalone node type is no longer registered. The companion Trigger keeps its existing identity. Existing V1 workflows are unchanged.
++
++Before replacing 0.2.0, export affected workflows. The pure offline transformer [upgrade-v020.mjs](migration/upgrade-v020.mjs) changes only the known Voicely 0.2.0 node shapes: it maps the old Agents type to Studio v2, retains node IDs/names/connections and credential references, moves optional fields into Options, and removes the Page Size setting. It returns a new **inactive** workflow without the original workflow ID, pinned data or trigger registration state. Review/rebind credentials and register triggers for the new copy before activation. It does not upload files, call services, update the live editor or read credentials.
++
++Call `upgradeV020Workflow(exportedWorkflow)` from a local module importing that file. The result contains `ok`, `workflow`, `changes`, `issues` and `requirements`. Conflicting new/legacy option values produce no migrated workflow. Review and import the returned workflow only when `ok` is true. Keep the original export for recovery; this utility is not a general secret scrubber.
++
++Old Studio/Trigger saved optional values have an execution-time fallback while the new Options field is absent. Explicit Options values take precedence, including zero and false. Migrate exported 0.2.0 workflows before editing/resaving them: editor normalization may drop unrepresented legacy fields. Never upgrade V1 to V2 by merely changing its version number.
++
++A credential-free [Agent catalog example](examples/studio-v2-agent-catalog.json) shows the consolidated resource and requires an explicit Agents credential selection before execution.
++
+ ## Development and license
+ 
+ Run `npm ci --ignore-scripts`, `npm run lint` and `npm test` to build and validate the connector with the n8n node CLI. The package has no external runtime dependencies. Release publishing uses the repository's GitHub Actions workflow with provenance and an owner-reviewed npm publication stage.
+diff --git a/examples/calling-order-verification/README.md b/examples/calling-order-verification/README.md
+index 1e059e1..e376023 100644
+--- a/examples/calling-order-verification/README.md
++++ b/examples/calling-order-verification/README.md
+@@ -35,7 +35,7 @@ Voicely API credentials authenticate your management calls to Voicely. This Cryp
+ 
+ Publish/activate the configured workflow in your own n8n instance and copy its HTTPS **production webhook URL**. The path in this example is `voicely-order-tools`; change it if that path is already used on your instance. A test webhook requires an active editor listener and is not the persistent endpoint for live calls.
+ 
+-Using **Voicely Agents → Tool → Register**, connect the same HTTPS URL to your accessible agent for these contracts:
++Using **Voicely Studio → Tool → Register Version**, connect the same HTTPS URL to your accessible agent for these contracts:
+ 
+ - `lookup_order`: read effect; arguments contain the string `reference`.
+ - `verify_order`: write effect; arguments contain strings `reference` and `last4`.
+diff --git a/examples/studio-v2-agent-catalog.json b/examples/studio-v2-agent-catalog.json
+new file mode 100644
+index 0000000..d152c44
+--- /dev/null
++++ b/examples/studio-v2-agent-catalog.json
+@@ -0,0 +1,50 @@
++{
++  "name": "Voicely Studio v2 - agent catalog",
++  "active": false,
++  "nodes": [
++    {
++      "id": "start",
++      "name": "Start",
++      "type": "n8n-nodes-base.manualTrigger",
++      "typeVersion": 1,
++      "position": [
++        0,
++        0
++      ],
++      "parameters": {}
++    },
++    {
++      "id": "catalog",
++      "name": "Voicely Studio",
++      "type": "@voicelystudio/n8n-nodes-voicely.voicely",
++      "typeVersion": 2,
++      "position": [
++        300,
++        0
++      ],
++      "parameters": {
++        "resource": "agent",
++        "operation": "getAll",
++        "returnAll": false,
++        "limit": 50,
++        "options": {}
++      }
++    }
++  ],
++  "connections": {
++    "Start": {
++      "main": [
++        [
++          {
++            "node": "Voicely Studio",
++            "type": "main",
++            "index": 0
++          }
++        ]
++      ]
++    }
++  },
++  "settings": {
++    "executionOrder": "v1"
++  }
++}
+diff --git a/examples/studio-v2-voice-catalog.json b/examples/studio-v2-voice-catalog.json
+index a51b729..de2c11e 100644
+--- a/examples/studio-v2-voice-catalog.json
++++ b/examples/studio-v2-voice-catalog.json
+@@ -26,9 +26,10 @@
+         "resource": "voice",
+         "operation": "getAll",
+         "returnAll": true,
+-        "pageSize": 50,
+-        "simplify": true,
+-        "requestTimeoutMs": 0
++        "options": {
++          "simplify": true,
++          "requestTimeoutMs": 0
++        }
+       }
+     }
+   ],
+diff --git a/migration/upgrade-v020.mjs b/migration/upgrade-v020.mjs
+new file mode 100644
+index 0000000..d70f85d
+--- /dev/null
++++ b/migration/upgrade-v020.mjs
+@@ -0,0 +1,62 @@
++// Pure, offline workflow transformation. No network, filesystem, credentials lookup or activation.
++const prefix = '@voicelystudio/n8n-nodes-voicely.';
++const agentResources = new Set(['agent', 'call', 'delivery', 'subscription', 'tool']);
++const agentOperations = {
++  agent: ['getAll'], call: ['get', 'revokeExports'], delivery: ['getAll', 'redeliver'],
++  subscription: ['test'], tool: ['getAll', 'register', 'disable'],
++};
++const object = v => v !== null && typeof v === 'object' && !Array.isArray(v);
++/** Produce a new inactive copy. Conflict => no workflow returned; original is never mutated. */
++export function upgradeV020Workflow(input) {
++  const changes = [], issues = [], requirements = [];
++  const fail = () => ({ok: false, workflow: null, changes: [], issues, requirements});
++  if (!object(input) || !Array.isArray(input.nodes) || !object(input.connections)) {
++    issues.push({code: 'workflow_invalid'}); return fail();
++  }
++  let workflow;
++  try { workflow = structuredClone(input); }
++  catch { issues.push({code: 'workflow_invalid'}); return fail(); }
++  for (const node of workflow.nodes) {
++    if (!object(node)) { issues.push({code: 'node_invalid'}); continue; }
++    const agents = node.type === prefix + 'voicelyAgents';
++    const studio = node.type === prefix + 'voicely' && node.typeVersion === 2;
++    const trigger = node.type === prefix + 'voicelyAgentsTrigger';
++    if (!agents && !studio && !trigger) continue;
++    const p = node.parameters;
++    if (!object(p) || (p.options !== undefined && !object(p.options))) {
++      issues.push({code: 'options_invalid', nodeId: node.id}); continue;
++    }
++    if (agents && (node.typeVersion !== 1 || !agentResources.has(p.resource)
++      || !agentOperations[p.resource].includes(p.operation))) {
++      issues.push({code: 'agent_operation_unrecognized', nodeId: node.id}); continue;
++    }
++    const fields = trigger ? ['requestTimeoutMs', 'includeSynthetic']
++      : agents ? ['requestTimeoutMs', 'includeData', 'purpose', 'effect', 'verifiedCaller']
++      : ['operationIdentity', 'requestTimeoutMs', 'simplify', 'speechTransport'];
++    for (const name of fields) {
++      if (!Object.hasOwn(p, name)) continue;
++      if (Object.hasOwn(p.options ?? {}, name) && JSON.stringify(p.options[name]) !== JSON.stringify(p[name])) {
++        issues.push({code: 'option_conflict', nodeId: node.id, field: name}); continue;
++      }
++      (p.options ??= {})[name] = p[name]; delete p[name];
++      changes.push({nodeId: node.id, field: name, action: 'move_to_options'});
++    }
++    if (Object.hasOwn(p, 'pageSize')) {
++      delete p.pageSize; changes.push({nodeId: node.id, field: 'pageSize', action: 'use_internal_page_size_50'});
++    }
++    if (agents) {
++      node.type = prefix + 'voicely'; node.typeVersion = 2;
++      // Existing credential reference and node IDs/names remain intact; no secrets are read.
++      if (p.resource === 'agent') { p.returnAll ??= true; }
++      changes.push({nodeId: node.id, action: 'agents_to_studio'});
++      requirements.push({nodeId: node.id, kind: 'review_automation_credential_and_resource'});
++    }
++  }
++  if (issues.length) return fail();
++  if (!changes.length) { issues.push({code: 'no_v020_changes'}); return fail(); }
++  for (const key of ['id', 'versionId', 'activeVersionId', 'versionCounter', 'createdAt', 'updatedAt', 'shared', 'ownedBy', 'homeProject', 'projectId', 'staticData', 'pinData']) delete workflow[key];
++  if (object(workflow.meta)) { delete workflow.meta.instanceId; delete workflow.meta.templateCredsSetupCompleted; }
++  workflow.active = false;
++  requirements.push({kind: 'rebind_review_credentials_and_register_trigger_for_new_copy'});
++  return {ok: true, workflow, changes, issues, requirements};
++}
+diff --git a/nodes/Voicely/Voicely.node.json b/nodes/Voicely/Voicely.node.json
+index e4f9a10..53883ee 100644
+--- a/nodes/Voicely/Voicely.node.json
++++ b/nodes/Voicely/Voicely.node.json
+@@ -1,6 +1,6 @@
+ {
+   "node": "@voicelystudio/n8n-nodes-voicely.voicely",
+-  "nodeVersion": "2.0",
++  "nodeVersion": "1.0",
+   "codexVersion": "1.0",
+   "categories": [
+     "Communication"
+diff --git a/nodes/Voicely/Voicely.node.ts b/nodes/Voicely/Voicely.node.ts
+index 0f0dfb4..dbcbfa5 100644
+--- a/nodes/Voicely/Voicely.node.ts
++++ b/nodes/Voicely/Voicely.node.ts
+@@ -11,7 +11,7 @@ export class Voicely extends VersionedNodeType {
+         name: "voicely",
+         icon: { light: "file:voicely.svg", dark: "file:voicely.svg" },
+         group: ["transform"],
+-        description: "Speech, transcription and owned voices with Voicely",
++        description: "Speech, voices, agents and call automation with Voicely",
+         defaultVersion: 2,
+         usableAsTool: true,
+       },
+diff --git a/nodes/Voicely/v2/VoicelyV2.node.ts b/nodes/Voicely/v2/VoicelyV2.node.ts
+index c782ea2..d4cad67 100644
+--- a/nodes/Voicely/v2/VoicelyV2.node.ts
++++ b/nodes/Voicely/v2/VoicelyV2.node.ts
+@@ -10,6 +10,8 @@ import type {
+   INodeTypeDescription,
+ } from "n8n-workflow";
+ import { properties } from "./properties";
++import { automationResourceIds, executeAutomation } from "./automation";
++import { executionOption } from "./options";
+ import { websocketRequest } from "./websocket";
+ import {
+   asObject,
+@@ -97,12 +99,23 @@ export class VoicelyV2 implements INodeType {
+     group: ["transform"],
+     subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+     version: 2,
+-    description: "Speech, transcription and owned voices with Voicely",
++    description: "Speech, voices, agents and call automation with Voicely",
+     defaults: { name: "Voicely Studio" },
+     inputs: [NodeConnectionTypes.Main],
+     outputs: [NodeConnectionTypes.Main],
+     usableAsTool: true,
+-    credentials: [{ name: "voicelySuiteApi", required: true }],
++    credentials: [
++      {
++        name: "voicelySuiteApi",
++        required: true,
++        displayOptions: { show: { resource: ["speech", "voice"] } },
++      },
++      {
++        name: "voicelyAutomationApi",
++        required: true,
++        displayOptions: { show: { resource: automationResourceIds } },
++      },
++    ],
+     properties,
+   };
+   methods = {
+@@ -182,6 +195,12 @@ export class VoicelyV2 implements INodeType {
+     },
+   };
+   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
++    if (
++      automationResourceIds.includes(
++        String(this.getNodeParameter("resource", 0)),
++      )
++    )
++      return executeAutomation.call(this);
+     const input = this.getInputData(),
+       output: INodeExecutionData[] = [];
+     for (let index = 0; index < input.length; index++) {
+@@ -191,7 +210,7 @@ export class VoicelyV2 implements INodeType {
+         const resource = String(this.getNodeParameter("resource", index)),
+           operation = String(this.getNodeParameter("operation", index));
+         const timeout = Number(
+-          this.getNodeParameter("requestTimeoutMs", index, 0),
++          executionOption(this, index, "requestTimeoutMs", 0),
+         );
+         if (!Number.isSafeInteger(timeout) || timeout < 0)
+           throw Error("timeout_invalid");
+@@ -204,7 +223,7 @@ export class VoicelyV2 implements INodeType {
+             ? speechSettings(parameters, operation)
+             : undefined;
+         const business = String(
+-          this.getNodeParameter("operationIdentity", index, ""),
++          executionOption(this, index, "operationIdentity", ""),
+         );
+         operationId = /^op_[a-f0-9]{64}$/.test(business)
+           ? business
+@@ -245,10 +264,8 @@ export class VoicelyV2 implements INodeType {
+             limit = returnAll
+               ? undefined
+               : positiveInteger(this.getNodeParameter("limit", index)),
+-            pageSize = positiveInteger(
+-              this.getNodeParameter("pageSize", index, 50),
+-            ),
+-            simplify = Boolean(this.getNodeParameter("simplify", index, true));
++            pageSize = 50,
++            simplify = Boolean(executionOption(this, index, "simplify", true));
+           let after: string | null = null,
+             remaining = limit;
+           const seen = new Set<string>(),
+@@ -300,7 +317,7 @@ export class VoicelyV2 implements INodeType {
+           output.push({
+             json:
+               operation === "get" &&
+-              Boolean(this.getNodeParameter("simplify", index, true))
++              Boolean(executionOption(this, index, "simplify", true))
+                 ? publicVoice(data)
+                 : data,
+             pairedItem,
+@@ -416,7 +433,7 @@ export class VoicelyV2 implements INodeType {
+         } else throw Error("operation_unsupported");
+         const transport =
+           resource === "speech" && operation === "textToSpeech"
+-            ? String(this.getNodeParameter("speechTransport", index, "http"))
++            ? String(executionOption(this, index, "speechTransport", "http"))
+             : "http";
+         if (!["http", "websocket"].includes(transport))
+           throw Error("transport_invalid");
+diff --git a/nodes/Voicely/v2/automation.ts b/nodes/Voicely/v2/automation.ts
+new file mode 100644
+index 0000000..9e28901
+--- /dev/null
++++ b/nodes/Voicely/v2/automation.ts
+@@ -0,0 +1,460 @@
++import { createHash } from "node:crypto";
++import { NodeOperationError } from "n8n-workflow";
++import type {
++  IDataObject,
++  IExecuteFunctions,
++  INodeExecutionData,
++  INodeProperties,
++} from "n8n-workflow";
++import { automationRequest } from "../../VoicelyAgentsTrigger/transport";
++import { selectedId } from "./transport";
++import { executionOption } from "./options";
++const object = (value: unknown): IDataObject => {
++  const v = typeof value === "string" ? JSON.parse(value) : value;
++  if (!v || typeof v !== "object" || Array.isArray(v))
++    throw Error("invalid_object");
++  return v as IDataObject;
++};
++const text = (value: unknown) => {
++  if (typeof value !== "string" || !value.trim()) throw Error("required_value");
++  return value;
++};
++export const automationResourceIds = [
++  "agent",
++  "call",
++  "delivery",
++  "subscription",
++  "tool",
++];
++export const automationProperties: INodeProperties[] = [
++  {
++    displayName: "Operation",
++    name: "operation",
++    type: "options",
++    noDataExpression: true,
++    default: "getAll",
++    displayOptions: { show: { resource: ["agent"] } },
++    options: [{ name: "Get Many", value: "getAll", action: "Get agents" }],
++  },
++  {
++    displayName: "Operation",
++    name: "operation",
++    type: "options",
++    noDataExpression: true,
++    default: "get",
++    displayOptions: { show: { resource: ["call"] } },
++    options: [
++      { name: "Get", value: "get", action: "Get a finalized call" },
++      {
++        name: "Revoke Data Sharing",
++        value: "revokeExports",
++        action: "Revoke call data sharing",
++      },
++    ],
++  },
++  {
++    displayName: "Operation",
++    name: "operation",
++    type: "options",
++    noDataExpression: true,
++    default: "getAll",
++    displayOptions: { show: { resource: ["delivery"] } },
++    options: [
++      { name: "Get Many", value: "getAll", action: "Get deliveries" },
++      {
++        name: "Redeliver",
++        value: "redeliver",
++        action: "Redeliver the same event",
++      },
++    ],
++  },
++  {
++    displayName: "Operation",
++    name: "operation",
++    type: "options",
++    noDataExpression: true,
++    default: "getAll",
++    displayOptions: { show: { resource: ["tool"] } },
++    options: [
++      { name: "Get Many", value: "getAll", action: "Get tools" },
++      {
++        name: "Register Version",
++        value: "register",
++        action: "Register a tool version",
++      },
++      { name: "Disable", value: "disable", action: "Disable a tool" },
++    ],
++  },
++  {
++    displayName: "Operation",
++    name: "operation",
++    type: "options",
++    noDataExpression: true,
++    default: "test",
++    displayOptions: { show: { resource: ["subscription"] } },
++    options: [
++      {
++        name: "Send Setup Event",
++        value: "test",
++        action: "Send a synthetic setup event",
++      },
++    ],
++  },
++  {
++    displayName: "Agent ID",
++    name: "agentId",
++    type: "string",
++    default: "",
++    required: true,
++    displayOptions: {
++      show: { resource: ["tool"], operation: ["getAll", "register"] },
++    },
++  },
++  {
++    displayName: "Call ID",
++    name: "callId",
++    type: "string",
++    default: "",
++    required: true,
++    displayOptions: { show: { resource: ["call"] } },
++  },
++  {
++    displayName: "Delivery ID",
++    name: "deliveryId",
++    type: "string",
++    default: "",
++    required: true,
++    displayOptions: {
++      show: { resource: ["delivery"], operation: ["redeliver"] },
++    },
++  },
++  {
++    displayName: "Tool ID",
++    name: "toolId",
++    type: "string",
++    default: "",
++    required: true,
++    displayOptions: {
++      show: { resource: ["tool"], operation: ["disable"] },
++    },
++  },
++  {
++    displayName: "Subscription ID",
++    name: "subscriptionId",
++    type: "string",
++    default: "",
++    required: true,
++    displayOptions: { show: { resource: ["subscription"] } },
++  },
++  {
++    displayName: "Return All",
++    name: "returnAll",
++    type: "boolean",
++    description: "Whether to return all results or only up to a given limit",
++    default: false,
++    displayOptions: {
++      show: { resource: ["agent", "delivery", "tool"], operation: ["getAll"] },
++    },
++  },
++  {
++    displayName: "Limit",
++    name: "limit",
++    type: "number",
++    typeOptions: {
++      minValue: 1,
++    },
++    default: 50,
++    displayOptions: {
++      show: {
++        resource: ["agent", "delivery", "tool"],
++        operation: ["getAll"],
++        returnAll: [false],
++      },
++    },
++    description: "Max number of results to return",
++  },
++  {
++    displayName: "Tool Name",
++    name: "toolName",
++    type: "string",
++    default: "",
++    required: true,
++    displayOptions: {
++      show: { resource: ["tool"], operation: ["register"] },
++    },
++    description:
++      "A stable function name, using letters, digits and underscores",
++  },
++  {
++    displayName: "Description",
++    name: "description",
++    type: "string",
++    default: "",
++    required: true,
++    displayOptions: {
++      show: { resource: ["tool"], operation: ["register"] },
++    },
++    description: "Explain when the agent should use this tool",
++  },
++  {
++    displayName: "Workflow Webhook URL",
++    name: "destination",
++    type: "string",
++    default: "",
++    required: true,
++    displayOptions: {
++      show: { resource: ["tool"], operation: ["register"] },
++    },
++    description:
++      "Production HTTPS URL of your business workflow. Return a typed completed result after business work finishes.",
++  },
++  {
++    displayName: "Input Schema",
++    name: "inputSchema",
++    type: "json",
++    default:
++      '{"type":"object","properties":{},"required":[],"additionalProperties":false}',
++    required: true,
++    displayOptions: {
++      show: { resource: ["tool"], operation: ["register"] },
++    },
++  },
++  {
++    displayName: "Result Schema",
++    name: "outputSchema",
++    type: "json",
++    default:
++      '{"type":"object","properties":{},"required":[],"additionalProperties":false}',
++    required: true,
++    displayOptions: {
++      show: { resource: ["tool"], operation: ["register"] },
++    },
++  },
++];
++export async function executeAutomation(
++  this: IExecuteFunctions,
++): Promise<INodeExecutionData[][]> {
++  const out: INodeExecutionData[] = [];
++  for (let index = 0; index < this.getInputData().length; index++) {
++    try {
++      const resource = String(this.getNodeParameter("resource", index)),
++        operation = String(this.getNodeParameter("operation", index)),
++        timeout = Number(executionOption(this, index, "requestTimeoutMs", 0));
++      if (!Number.isSafeInteger(timeout) || timeout < 0) throw Error();
++      const get = (name: string) => text(this.getNodeParameter(name, index)),
++        send = (
++          path: string,
++          options: Parameters<typeof automationRequest>[2] = {},
++        ) => automationRequest(this, path, { ...options, timeout });
++      const emit = (data: unknown) =>
++        out.push({ json: object(data), pairedItem: { item: index } });
++      if (resource === "agent" && operation === "getAll") {
++        const result = await send("/v1/agents");
++        if (!Array.isArray(result?.agents)) throw Error();
++        const all = Boolean(this.getNodeParameter("returnAll", index, false)),
++          limit = all
++            ? undefined
++            : Number(this.getNodeParameter("limit", index, 50));
++        if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1))
++          throw Error();
++        for (const agent of limit === undefined
++          ? result.agents
++          : result.agents.slice(0, limit))
++          emit(agent);
++        continue;
++      }
++      if (resource === "call" && operation === "get") {
++        const include = executionOption(
++          this,
++          index,
++          "includeData",
++          [],
++        ) as unknown;
++        if (
++          !Array.isArray(include) ||
++          new Set(include).size !== include.length ||
++          include.some((s) => !["lead", "transcript", "context"].includes(s))
++        )
++          throw Error();
++        const query = include.length
++          ? "?" + new URLSearchParams({ include: include.join(",") })
++          : "";
++        emit(
++          await send("/v1/calls/" + encodeURIComponent(get("callId")) + query),
++        );
++        continue;
++      }
++      if (resource === "call" && operation === "revokeExports") {
++        emit(
++          await send(
++            "/v1/calls/" +
++              encodeURIComponent(get("callId")) +
++              "/exports/revoke",
++            {
++              method: "POST",
++              body: {},
++            },
++          ),
++        );
++        continue;
++      }
++      if (resource === "tool" && operation === "register") {
++        const credentials = await this.getCredentials("voicelyAutomationApi");
++        const purpose = String(
++            executionOption(this, index, "purpose", "business"),
++          ),
++          secret = text(credentials.webhookSecret),
++          effect = text(executionOption(this, index, "effect", "read")),
++          verified = executionOption(this, index, "verifiedCaller", true);
++        if (
++          !["read", "write", "escalate"].includes(effect) ||
++          typeof verified !== "boolean" ||
++          !["business", "verify_caller"].includes(purpose) ||
++          (purpose === "verify_caller" && (effect !== "read" || verified))
++        )
++          throw Error();
++        emit(
++          await send("/v1/automation/tools", {
++            method: "POST",
++            body: {
++              agent_id: selectedId(this.getNodeParameter("agentId", index)),
++              name: get("toolName"),
++              description: get("description"),
++              effect,
++              purpose,
++              requires_verified_caller: verified,
++              input_schema: object(this.getNodeParameter("inputSchema", index)),
++              output_schema: object(
++                this.getNodeParameter("outputSchema", index),
++              ),
++              destination: get("destination"),
++              webhook_secret: secret,
++            },
++          }),
++        );
++        continue;
++      }
++      if (resource === "tool" && operation === "disable") {
++        emit(
++          await send(
++            "/v1/automation/tools/" + encodeURIComponent(get("toolId")),
++            {
++              method: "DELETE",
++            },
++          ),
++        );
++        continue;
++      }
++      if (resource === "delivery" && operation === "redeliver") {
++        emit(
++          await send(
++            "/v1/automation/deliveries/" +
++              encodeURIComponent(get("deliveryId")) +
++              "/redeliver",
++            { method: "POST", body: {} },
++          ),
++        );
++        continue;
++      }
++      if (resource === "subscription" && operation === "test") {
++        const identity =
++          "vly_setup_" +
++          createHash("sha256")
++            .update(
++              JSON.stringify([
++                this.getWorkflow().id,
++                this.getExecutionId(),
++                this.getNode().id,
++                index,
++              ]),
++            )
++            .digest("hex");
++        emit(
++          await send(
++            "/v1/automation/subscriptions/" +
++              encodeURIComponent(get("subscriptionId")) +
++              "/test",
++            {
++              method: "POST",
++              headers: { "idempotency-key": identity },
++              body: {},
++            },
++          ),
++        );
++        continue;
++      }
++      if (["delivery", "tool"].includes(resource) && operation === "getAll") {
++        const all = Boolean(this.getNodeParameter("returnAll", index, false)),
++          limit = all
++            ? undefined
++            : Number(this.getNodeParameter("limit", index)),
++          size = 50;
++        if (
++          !Number.isSafeInteger(size) ||
++          size < 1 ||
++          (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1))
++        )
++          throw Error();
++        let after: string | undefined,
++          remaining = limit;
++        const seen = new Set<string>();
++        do {
++          const query = new URLSearchParams({
++            limit: String(
++              remaining === undefined ? size : Math.min(size, remaining),
++            ),
++          });
++          if (after) query.set("after", after);
++          if (resource === "tool")
++            query.set(
++              "agent_id",
++              selectedId(this.getNodeParameter("agentId", index)),
++            );
++          const page = await send(
++              "/v1/automation/" +
++                (resource === "tool" ? "tools" : "deliveries") +
++                "?" +
++                query,
++            ),
++            records = page?.[resource === "tool" ? "tools" : "deliveries"];
++          if (!Array.isArray(records)) throw Error();
++          for (const row of records) {
++            emit(row);
++            if (remaining !== undefined && --remaining === 0) break;
++          }
++          if (remaining === 0) break;
++          const next = page?.next_cursor;
++          if (next !== null && next !== undefined && typeof next !== "string")
++            throw Error();
++          after = next ? String(next) : undefined;
++          if (after) {
++            if (seen.has(after)) throw Error();
++            seen.add(after);
++          }
++        } while (after);
++        continue;
++      }
++      throw Error();
++    } catch {
++      if (this.continueOnFail())
++        out.push({
++          json: {
++            error:
++              "Voicely agent operation could not complete. No automatic retry was made.",
++          },
++          pairedItem: { item: index },
++        });
++      else
++        throw new NodeOperationError(
++          this.getNode(),
++          "Voicely agent operation could not complete",
++          {
++            itemIndex: index,
++            description:
++              "Check this key’s scopes, agent ownership and operation settings. HTTP acceptance alone is not business completion.",
++          },
++        );
++    }
++  }
++  return [out];
++}
+diff --git a/nodes/Voicely/v2/options.ts b/nodes/Voicely/v2/options.ts
+new file mode 100644
+index 0000000..a3070d4
+--- /dev/null
++++ b/nodes/Voicely/v2/options.ts
+@@ -0,0 +1,33 @@
++import type {
++  IDataObject,
++  IExecuteFunctions,
++  IHookFunctions,
++  IWebhookFunctions,
++  ILoadOptionsFunctions,
++} from "n8n-workflow";
++function collection(value: unknown): IDataObject {
++  if (!value || typeof value !== "object" || Array.isArray(value))
++    throw Error("options_invalid");
++  return value as IDataObject;
++}
++export function executionOption(
++  context: IExecuteFunctions,
++  index: number,
++  name: string,
++  fallback: unknown,
++): unknown {
++  const values = collection(context.getNodeParameter("options", index, {}));
++  return Object.hasOwn(values, name)
++    ? values[name]
++    : context.getNodeParameter(name, index, fallback);
++}
++export function hookOption(
++  context: IHookFunctions | IWebhookFunctions | ILoadOptionsFunctions,
++  name: string,
++  fallback: unknown,
++): unknown {
++  const values = collection(context.getNodeParameter("options", {}));
++  return Object.hasOwn(values, name)
++    ? values[name]
++    : context.getNodeParameter(name, fallback);
++}
+diff --git a/nodes/Voicely/v2/properties.ts b/nodes/Voicely/v2/properties.ts
+index 7cf129c..c774dc2 100644
+--- a/nodes/Voicely/v2/properties.ts
++++ b/nodes/Voicely/v2/properties.ts
+@@ -1,4 +1,5 @@
+ import type { INodeProperties } from "n8n-workflow";
++import { automationProperties } from "./automation";
+ const speech = { resource: ["speech"] },
+   voice = { resource: ["voice"] };
+ const formatIds = [
+@@ -17,7 +18,12 @@ export const properties: INodeProperties[] = [
+     noDataExpression: true,
+     default: "speech",
+     options: [
++      { name: "Agent", value: "agent" },
++      { name: "Call", value: "call" },
++      { name: "Delivery", value: "delivery" },
+       { name: "Speech", value: "speech" },
++      { name: "Subscription", value: "subscription" },
++      { name: "Tool", value: "tool" },
+       { name: "Voice", value: "voice" },
+     ],
+   },
+@@ -74,7 +80,10 @@ export const properties: INodeProperties[] = [
+     default: { mode: "list", value: "" },
+     required: true,
+     displayOptions: {
+-      show: { operation: ["textToSpeech", "speechToSpeech", "get", "delete"] },
++      show: {
++        resource: ["speech", "voice"],
++        operation: ["textToSpeech", "speechToSpeech", "get", "delete"],
++      },
+     },
+     modes: [
+       {
+@@ -86,21 +95,7 @@ export const properties: INodeProperties[] = [
+       { displayName: "ID", name: "id", type: "string" },
+     ],
+   },
+-  {
+-    displayName: "Speech Transport",
+-    name: "speechTransport",
+-    type: "options",
+-    default: "http",
+-    options: [
+-      { name: "HTTP", value: "http" },
+-      { name: "WebSocket", value: "websocket" },
+-    ],
+-    description:
+-      "Use the same independent Service URL. WebSocket needs a supported server-side n8n host and has no replay or automatic HTTP fallback.",
+-    displayOptions: {
+-      show: { resource: ["speech"], operation: ["textToSpeech"] },
+-    },
+-  },
++
+   {
+     displayName: "Text",
+     name: "text",
+@@ -169,7 +164,7 @@ export const properties: INodeProperties[] = [
+     type: "boolean",
+     description: "Whether to return all results or only up to a given limit",
+     default: false,
+-    displayOptions: { show: { operation: ["getAll"] } },
++    displayOptions: { show: { resource: ["voice"], operation: ["getAll"] } },
+   },
+   {
+     displayName: "Limit",
+@@ -179,16 +174,12 @@ export const properties: INodeProperties[] = [
+       minValue: 1,
+     },
+     default: 50,
+-    displayOptions: { show: { operation: ["getAll"], returnAll: [false] } },
++    displayOptions: {
++      show: { resource: ["voice"], operation: ["getAll"], returnAll: [false] },
++    },
+     description: "Max number of results to return",
+   },
+-  {
+-    displayName: "Simplify",
+-    name: "simplify",
+-    type: "boolean",
+-    default: true,
+-    displayOptions: { show: { operation: ["get", "getAll"] } },
+-  },
++
+   {
+     displayName: "Output Binary Field",
+     name: "outputBinaryField",
+@@ -276,28 +267,114 @@ export const properties: INodeProperties[] = [
+       },
+     ],
+   },
++
++  ...automationProperties,
+   {
+-    displayName: "Operation Identity",
+-    name: "operationIdentity",
+-    type: "string",
+-    default: "",
+-    description:
+-      "Use a stable business identity to safely check retries across workflow runs. Blank uses this execution, node and input item.",
+-  },
+-  {
+-    displayName: "Request Timeout (Ms)",
+-    name: "requestTimeoutMs",
+-    type: "number",
+-    default: 0,
+-    description:
+-      "Zero leaves the request without a client timeout. Server policy still applies.",
+-  },
+-  {
+-    displayName: "Page Size",
+-    name: "pageSize",
+-    type: "number",
+-    default: 50,
+-    description: "User-selected catalog page size, without a coded maximum",
+-    displayOptions: { show: { operation: ["getAll"] } },
++    displayName: "Options",
++    name: "options",
++    type: "collection",
++    default: {},
++    placeholder: "Add Option",
++    options: [
++      {
++        displayName: "Effect",
++        name: "effect",
++        type: "options",
++        default: "read",
++        displayOptions: {
++          show: { "/resource": ["tool"], "/operation": ["register"] },
++        },
++        options: [
++          { name: "Read", value: "read" },
++          { name: "Write", value: "write" },
++          { name: "Escalate or Notify", value: "escalate" },
++        ],
++        description:
++          "Writes and escalation require caller confirmation before dispatch",
++      },
++      {
++        displayName: "Include Shared Data",
++        name: "includeData",
++        type: "multiOptions",
++        default: [],
++        displayOptions: {
++          show: { "/resource": ["call"], "/operation": ["get"] },
++        },
++        options: [
++          { name: "Callback Details", value: "lead" },
++          { name: "Transcript", value: "transcript" },
++          { name: "Conversation Context", value: "context" },
++        ],
++        description:
++          "Requires explicit caller sharing permission and the matching key scopes. Expired or withdrawn details are unavailable.",
++      },
++      {
++        displayName: "Operation Identity",
++        name: "operationIdentity",
++        type: "string",
++        default: "",
++        displayOptions: { show: { "/resource": ["speech", "voice"] } },
++        description:
++          "Use a stable business identity to safely check retries across workflow runs. Blank uses this execution, node and input item.",
++      },
++      {
++        displayName: "Purpose",
++        name: "purpose",
++        type: "options",
++        default: "business",
++        displayOptions: {
++          show: { "/resource": ["tool"], "/operation": ["register"] },
++        },
++        options: [
++          { name: "Business Action", value: "business" },
++          { name: "Verify Caller", value: "verify_caller" },
++        ],
++        description:
++          "A verification tool must be read-only and must not itself require a verified caller. It returns verified and subject after your business system checks identity.",
++      },
++      {
++        displayName: "Request Timeout (Ms)",
++        name: "requestTimeoutMs",
++        type: "number",
++        default: 0,
++        description:
++          "Zero leaves the request without a client timeout. Server policy still applies.",
++      },
++      {
++        displayName: "Require Verified Caller",
++        name: "verifiedCaller",
++        type: "boolean",
++        default: true,
++        displayOptions: {
++          show: { "/resource": ["tool"], "/operation": ["register"] },
++        },
++        description:
++          "Whether to require verified caller identity before accessing sensitive information",
++      },
++      {
++        displayName: "Simplify",
++        name: "simplify",
++        type: "boolean",
++        default: true,
++        displayOptions: {
++          show: { "/resource": ["voice"], "/operation": ["get", "getAll"] },
++        },
++      },
++      {
++        displayName: "Speech Transport",
++        name: "speechTransport",
++        type: "options",
++        default: "http",
++        options: [
++          { name: "HTTP", value: "http" },
++          { name: "WebSocket", value: "websocket" },
++        ],
++        description:
++          "Use the same independent Service URL. WebSocket needs a supported server-side n8n host and has no replay or automatic HTTP fallback.",
++        displayOptions: {
++          show: { "/resource": ["speech"], "/operation": ["textToSpeech"] },
++        },
++      },
++    ],
+   },
+ ];
+diff --git a/nodes/VoicelyAgents/VoicelyAgents.node.json b/nodes/VoicelyAgents/VoicelyAgents.node.json
+deleted file mode 100644
+index f77740b..0000000
+--- a/nodes/VoicelyAgents/VoicelyAgents.node.json
++++ /dev/null
+@@ -1,15 +0,0 @@
+-{
+-  "node": "@voicelystudio/n8n-nodes-voicely.voicelyAgents",
+-  "nodeVersion": "1.0",
+-  "codexVersion": "1.0",
+-  "categories": [
+-    "Communication"
+-  ],
+-  "resources": {
+-    "primaryDocumentation": [
+-      {
+-        "url": "https://tryvoicely.com/integrations/n8n"
+-      }
+-    ]
+-  }
+-}
+diff --git a/nodes/VoicelyAgents/VoicelyAgents.node.ts b/nodes/VoicelyAgents/VoicelyAgents.node.ts
+deleted file mode 100644
+index e4fbe86..0000000
+--- a/nodes/VoicelyAgents/VoicelyAgents.node.ts
++++ /dev/null
+@@ -1,547 +0,0 @@
+-import { createHash } from "node:crypto";
+-import { NodeConnectionTypes, NodeOperationError } from "n8n-workflow";
+-import type {
+-  IDataObject,
+-  IExecuteFunctions,
+-  INodeExecutionData,
+-  INodeType,
+-  INodeTypeDescription,
+-} from "n8n-workflow";
+-import { automationRequest } from "../VoicelyAgentsTrigger/transport";
+-import { selectedId } from "../Voicely/v2/transport";
+-const object = (value: unknown): IDataObject => {
+-  const v = typeof value === "string" ? JSON.parse(value) : value;
+-  if (!v || typeof v !== "object" || Array.isArray(v))
+-    throw Error("invalid_object");
+-  return v as IDataObject;
+-};
+-const text = (value: unknown) => {
+-  if (typeof value !== "string" || !value.trim()) throw Error("required_value");
+-  return value;
+-};
+-export class VoicelyAgents implements INodeType {
+-  description: INodeTypeDescription = {
+-    displayName: "Voicely Agents",
+-    name: "voicelyAgents",
+-    icon: { light: "file:voicely.svg", dark: "file:voicely.svg" },
+-    group: ["transform"],
+-    subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+-    version: 1,
+-    description:
+-      "Configure agent workflows and inspect call automation with Voicely",
+-    defaults: { name: "Voicely Agents" },
+-    inputs: [NodeConnectionTypes.Main],
+-    outputs: [NodeConnectionTypes.Main],
+-    usableAsTool: true,
+-    credentials: [{ name: "voicelyAutomationApi", required: true }],
+-    properties: [
+-      {
+-        displayName: "Resource",
+-        name: "resource",
+-        type: "options",
+-        noDataExpression: true,
+-        default: "agent",
+-        options: [
+-          { name: "Agent", value: "agent" },
+-          { name: "Call", value: "call" },
+-          { name: "Delivery", value: "delivery" },
+-          { name: "Subscription", value: "subscription" },
+-          { name: "Tool", value: "tool" },
+-        ],
+-      },
+-      {
+-        displayName: "Operation",
+-        name: "operation",
+-        type: "options",
+-        noDataExpression: true,
+-        default: "getAll",
+-        displayOptions: { show: { resource: ["agent"] } },
+-        options: [{ name: "Get Many", value: "getAll", action: "Get agents" }],
+-      },
+-      {
+-        displayName: "Operation",
+-        name: "operation",
+-        type: "options",
+-        noDataExpression: true,
+-        default: "get",
+-        displayOptions: { show: { resource: ["call"] } },
+-        options: [
+-          { name: "Get", value: "get", action: "Get a finalized call" },
+-          {
+-            name: "Revoke Data Sharing",
+-            value: "revokeExports",
+-            action: "Revoke call data sharing",
+-          },
+-        ],
+-      },
+-      {
+-        displayName: "Operation",
+-        name: "operation",
+-        type: "options",
+-        noDataExpression: true,
+-        default: "getAll",
+-        displayOptions: { show: { resource: ["delivery"] } },
+-        options: [
+-          { name: "Get Many", value: "getAll", action: "Get deliveries" },
+-          {
+-            name: "Redeliver",
+-            value: "redeliver",
+-            action: "Redeliver the same event",
+-          },
+-        ],
+-      },
+-      {
+-        displayName: "Operation",
+-        name: "operation",
+-        type: "options",
+-        noDataExpression: true,
+-        default: "getAll",
+-        displayOptions: { show: { resource: ["tool"] } },
+-        options: [
+-          { name: "Get Many", value: "getAll", action: "Get tools" },
+-          {
+-            name: "Register Version",
+-            value: "register",
+-            action: "Register a tool version",
+-          },
+-          { name: "Disable", value: "disable", action: "Disable a tool" },
+-        ],
+-      },
+-      {
+-        displayName: "Operation",
+-        name: "operation",
+-        type: "options",
+-        noDataExpression: true,
+-        default: "test",
+-        displayOptions: { show: { resource: ["subscription"] } },
+-        options: [
+-          {
+-            name: "Send Setup Event",
+-            value: "test",
+-            action: "Send a synthetic setup event",
+-          },
+-        ],
+-      },
+-      {
+-        displayName: "Agent ID",
+-        name: "agentId",
+-        type: "string",
+-        default: "",
+-        required: true,
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["getAll", "register"] },
+-        },
+-      },
+-      {
+-        displayName: "Call ID",
+-        name: "callId",
+-        type: "string",
+-        default: "",
+-        required: true,
+-        displayOptions: { show: { resource: ["call"] } },
+-      },
+-      {
+-        displayName: "Include Shared Data",
+-        name: "includeData",
+-        type: "multiOptions",
+-        default: [],
+-        displayOptions: { show: { resource: ["call"], operation: ["get"] } },
+-        options: [
+-          { name: "Callback Details", value: "lead" },
+-          { name: "Transcript", value: "transcript" },
+-          { name: "Conversation Context", value: "context" },
+-        ],
+-        description:
+-          "Requires explicit caller sharing permission and the matching key scopes. Expired or withdrawn details are unavailable.",
+-      },
+-      {
+-        displayName: "Delivery ID",
+-        name: "deliveryId",
+-        type: "string",
+-        default: "",
+-        required: true,
+-        displayOptions: {
+-          show: { resource: ["delivery"], operation: ["redeliver"] },
+-        },
+-      },
+-      {
+-        displayName: "Tool ID",
+-        name: "toolId",
+-        type: "string",
+-        default: "",
+-        required: true,
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["disable"] },
+-        },
+-      },
+-      {
+-        displayName: "Subscription ID",
+-        name: "subscriptionId",
+-        type: "string",
+-        default: "",
+-        required: true,
+-        displayOptions: { show: { resource: ["subscription"] } },
+-      },
+-      {
+-        displayName: "Return All",
+-        name: "returnAll",
+-        type: "boolean",
+-        description:
+-          "Whether to return all results or only up to a given limit",
+-        default: false,
+-        displayOptions: {
+-          show: { resource: ["delivery", "tool"], operation: ["getAll"] },
+-        },
+-      },
+-      {
+-        displayName: "Limit",
+-        name: "limit",
+-        type: "number",
+-        typeOptions: {
+-          minValue: 1,
+-        },
+-        default: 50,
+-        displayOptions: {
+-          show: {
+-            resource: ["delivery", "tool"],
+-            operation: ["getAll"],
+-            returnAll: [false],
+-          },
+-        },
+-        description: "Max number of results to return",
+-      },
+-      {
+-        displayName: "Page Size",
+-        name: "pageSize",
+-        type: "number",
+-        default: 50,
+-        displayOptions: {
+-          show: { resource: ["delivery", "tool"], operation: ["getAll"] },
+-        },
+-        description:
+-          "Records per request, subject to the service configured page policy",
+-      },
+-      {
+-        displayName: "Tool Name",
+-        name: "toolName",
+-        type: "string",
+-        default: "",
+-        required: true,
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["register"] },
+-        },
+-        description:
+-          "A stable function name, using letters, digits and underscores",
+-      },
+-      {
+-        displayName: "Description",
+-        name: "description",
+-        type: "string",
+-        default: "",
+-        required: true,
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["register"] },
+-        },
+-        description: "Explain when the agent should use this tool",
+-      },
+-      {
+-        displayName: "Purpose",
+-        name: "purpose",
+-        type: "options",
+-        default: "business",
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["register"] },
+-        },
+-        options: [
+-          { name: "Business Action", value: "business" },
+-          { name: "Verify Caller", value: "verify_caller" },
+-        ],
+-        description:
+-          "A verification tool must be read-only and must not itself require a verified caller. It returns verified and subject after your business system checks identity.",
+-      },
+-      {
+-        displayName: "Effect",
+-        name: "effect",
+-        type: "options",
+-        default: "read",
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["register"] },
+-        },
+-        options: [
+-          { name: "Read", value: "read" },
+-          { name: "Write", value: "write" },
+-          { name: "Escalate or Notify", value: "escalate" },
+-        ],
+-        description:
+-          "Writes and escalation require caller confirmation before dispatch",
+-      },
+-      {
+-        displayName: "Require Verified Caller",
+-        name: "verifiedCaller",
+-        type: "boolean",
+-        default: true,
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["register"] },
+-        },
+-        description:
+-          "Whether to require verified caller identity before accessing sensitive information",
+-      },
+-      {
+-        displayName: "Workflow Webhook URL",
+-        name: "destination",
+-        type: "string",
+-        default: "",
+-        required: true,
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["register"] },
+-        },
+-        description:
+-          "Production HTTPS URL of your business workflow. Return a typed completed result after business work finishes.",
+-      },
+-      {
+-        displayName: "Input Schema",
+-        name: "inputSchema",
+-        type: "json",
+-        default:
+-          '{"type":"object","properties":{},"required":[],"additionalProperties":false}',
+-        required: true,
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["register"] },
+-        },
+-      },
+-      {
+-        displayName: "Result Schema",
+-        name: "outputSchema",
+-        type: "json",
+-        default:
+-          '{"type":"object","properties":{},"required":[],"additionalProperties":false}',
+-        required: true,
+-        displayOptions: {
+-          show: { resource: ["tool"], operation: ["register"] },
+-        },
+-      },
+-      {
+-        displayName: "Request Timeout (Ms)",
+-        name: "requestTimeoutMs",
+-        type: "number",
+-        default: 0,
+-        description:
+-          "Zero adds no node-side deadline. Service-side policies still apply.",
+-      },
+-    ],
+-  };
+-  async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+-    const out: INodeExecutionData[] = [];
+-    for (let index = 0; index < this.getInputData().length; index++) {
+-      try {
+-        const resource = String(this.getNodeParameter("resource", index)),
+-          operation = String(this.getNodeParameter("operation", index)),
+-          timeout = Number(this.getNodeParameter("requestTimeoutMs", index, 0));
+-        if (!Number.isSafeInteger(timeout) || timeout < 0) throw Error();
+-        const get = (name: string) => text(this.getNodeParameter(name, index)),
+-          send = (
+-            path: string,
+-            options: Parameters<typeof automationRequest>[2] = {},
+-          ) => automationRequest(this, path, { ...options, timeout });
+-        const emit = (data: unknown) =>
+-          out.push({ json: object(data), pairedItem: { item: index } });
+-        if (resource === "agent" && operation === "getAll") {
+-          const result = await send("/v1/agents");
+-          if (!Array.isArray(result?.agents)) throw Error();
+-          for (const agent of result.agents) emit(agent);
+-          continue;
+-        }
+-        if (resource === "call" && operation === "get") {
+-          const include = this.getNodeParameter(
+-            "includeData",
+-            index,
+-            [],
+-          ) as unknown;
+-          if (
+-            !Array.isArray(include) ||
+-            new Set(include).size !== include.length ||
+-            include.some((s) => !["lead", "transcript", "context"].includes(s))
+-          )
+-            throw Error();
+-          const query = include.length
+-            ? "?" + new URLSearchParams({ include: include.join(",") })
+-            : "";
+-          emit(
+-            await send(
+-              "/v1/calls/" + encodeURIComponent(get("callId")) + query,
+-            ),
+-          );
+-          continue;
+-        }
+-        if (resource === "call" && operation === "revokeExports") {
+-          emit(
+-            await send(
+-              "/v1/calls/" +
+-                encodeURIComponent(get("callId")) +
+-                "/exports/revoke",
+-              { method: "POST", body: {} },
+-            ),
+-          );
+-          continue;
+-        }
+-        if (resource === "tool" && operation === "register") {
+-          const credentials = await this.getCredentials("voicelyAutomationApi");
+-          const purpose = String(
+-              this.getNodeParameter("purpose", index, "business"),
+-            ),
+-            secret = text(credentials.webhookSecret),
+-            effect = get("effect"),
+-            verified = this.getNodeParameter("verifiedCaller", index);
+-          if (
+-            !["read", "write", "escalate"].includes(effect) ||
+-            typeof verified !== "boolean" ||
+-            !["business", "verify_caller"].includes(purpose) ||
+-            (purpose === "verify_caller" && (effect !== "read" || verified))
+-          )
+-            throw Error();
+-          emit(
+-            await send("/v1/automation/tools", {
+-              method: "POST",
+-              body: {
+-                agent_id: selectedId(this.getNodeParameter("agentId", index)),
+-                name: get("toolName"),
+-                description: get("description"),
+-                effect,
+-                purpose,
+-                requires_verified_caller: verified,
+-                input_schema: object(
+-                  this.getNodeParameter("inputSchema", index),
+-                ),
+-                output_schema: object(
+-                  this.getNodeParameter("outputSchema", index),
+-                ),
+-                destination: get("destination"),
+-                webhook_secret: secret,
+-              },
+-            }),
+-          );
+-          continue;
+-        }
+-        if (resource === "tool" && operation === "disable") {
+-          emit(
+-            await send(
+-              "/v1/automation/tools/" + encodeURIComponent(get("toolId")),
+-              { method: "DELETE" },
+-            ),
+-          );
+-          continue;
+-        }
+-        if (resource === "delivery" && operation === "redeliver") {
+-          emit(
+-            await send(
+-              "/v1/automation/deliveries/" +
+-                encodeURIComponent(get("deliveryId")) +
+-                "/redeliver",
+-              { method: "POST", body: {} },
+-            ),
+-          );
+-          continue;
+-        }
+-        if (resource === "subscription" && operation === "test") {
+-          const identity =
+-            "vly_setup_" +
+-            createHash("sha256")
+-              .update(
+-                JSON.stringify([
+-                  this.getWorkflow().id,
+-                  this.getExecutionId(),
+-                  this.getNode().id,
+-                  index,
+-                ]),
+-              )
+-              .digest("hex");
+-          emit(
+-            await send(
+-              "/v1/automation/subscriptions/" +
+-                encodeURIComponent(get("subscriptionId")) +
+-                "/test",
+-              {
+-                method: "POST",
+-                headers: { "idempotency-key": identity },
+-                body: {},
+-              },
+-            ),
+-          );
+-          continue;
+-        }
+-        if (["delivery", "tool"].includes(resource) && operation === "getAll") {
+-          const all = Boolean(this.getNodeParameter("returnAll", index, false)),
+-            limit = all
+-              ? undefined
+-              : Number(this.getNodeParameter("limit", index)),
+-            size = Number(this.getNodeParameter("pageSize", index));
+-          if (
+-            !Number.isSafeInteger(size) ||
+-            size < 1 ||
+-            (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1))
+-          )
+-            throw Error();
+-          let after: string | undefined,
+-            remaining = limit;
+-          const seen = new Set<string>();
+-          do {
+-            const query = new URLSearchParams({
+-              limit: String(
+-                remaining === undefined ? size : Math.min(size, remaining),
+-              ),
+-            });
+-            if (after) query.set("after", after);
+-            if (resource === "tool")
+-              query.set(
+-                "agent_id",
+-                selectedId(this.getNodeParameter("agentId", index)),
+-              );
+-            const page = await send(
+-                "/v1/automation/" +
+-                  (resource === "tool" ? "tools" : "deliveries") +
+-                  "?" +
+-                  query,
+-              ),
+-              records = page?.[resource === "tool" ? "tools" : "deliveries"];
+-            if (!Array.isArray(records)) throw Error();
+-            for (const row of records) {
+-              emit(row);
+-              if (remaining !== undefined && --remaining === 0) break;
+-            }
+-            if (remaining === 0) break;
+-            const next = page?.next_cursor;
+-            if (next !== null && next !== undefined && typeof next !== "string")
+-              throw Error();
+-            after = next ? String(next) : undefined;
+-            if (after) {
+-              if (seen.has(after)) throw Error();
+-              seen.add(after);
+-            }
+-          } while (after);
+-          continue;
+-        }
+-        throw Error();
+-      } catch {
+-        if (this.continueOnFail())
+-          out.push({
+-            json: {
+-              error:
+-                "Voicely agent operation could not complete. No automatic retry was made.",
+-            },
+-            pairedItem: { item: index },
+-          });
+-        else
+-          throw new NodeOperationError(
+-            this.getNode(),
+-            "Voicely agent operation could not complete",
+-            {
+-              itemIndex: index,
+-              description:
+-                "Check this key’s scopes, agent ownership and operation settings. HTTP acceptance alone is not business completion.",
+-            },
+-          );
+-      }
+-    }
+-    return [out];
+-  }
+-}
+diff --git a/nodes/VoicelyAgents/voicely.svg b/nodes/VoicelyAgents/voicely.svg
+deleted file mode 100644
+index 1990323..0000000
+--- a/nodes/VoicelyAgents/voicely.svg
++++ /dev/null
+@@ -1,3 +0,0 @@
+-<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+-<circle cx="49.5" cy="49.5" r="47.5" fill="#FF4A00"/>
+-</svg>
+diff --git a/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.ts b/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.ts
+index 5dcb05f..52aa2d5 100644
+--- a/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.ts
++++ b/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.ts
+@@ -12,6 +12,7 @@ import type {
+ } from "n8n-workflow";
+ import { selectedId } from "../Voicely/v2/transport";
+ import { automationRequest } from "./transport";
++import { hookOption } from "../Voicely/v2/options";
+ type Registration = {
+   id: string;
+   agent: string;
+@@ -86,21 +87,31 @@ export class VoicelyAgentsTrigger implements INodeType {
+           { displayName: "By ID", name: "id", type: "string" },
+         ],
+       },
++
+       {
+-        displayName: "Request Timeout (Ms)",
+-        name: "requestTimeoutMs",
+-        type: "number",
+-        default: 0,
+-        description:
+-          "Timeout for registration requests. Zero adds no client deadline; the service still applies its configured limits.",
+-      },
+-      {
+-        displayName: "Include Setup Test Events",
+-        name: "includeSynthetic",
+-        type: "boolean",
+-        default: true,
+-        description:
+-          "Whether to emit clearly marked synthetic setup events. Templates must keep these separate from business writes.",
++        displayName: "Options",
++        name: "options",
++        type: "collection",
++        default: {},
++        placeholder: "Add Option",
++        options: [
++          {
++            displayName: "Include Setup Test Events",
++            name: "includeSynthetic",
++            type: "boolean",
++            default: true,
++            description:
++              "Whether to emit clearly marked synthetic setup events. Templates must keep these separate from business writes.",
++          },
++          {
++            displayName: "Request Timeout (Ms)",
++            name: "requestTimeoutMs",
++            type: "number",
++            default: 0,
++            description:
++              "Timeout for registration requests. Zero adds no client deadline; the service still applies its configured limits.",
++          },
++        ],
+       },
+     ],
+   };
+@@ -323,7 +334,7 @@ export class VoicelyAgentsTrigger implements INodeType {
+         return refuse(400, "voicely_event_invalid");
+       if (
+         body.synthetic === true &&
+-        !this.getNodeParameter("includeSynthetic", true)
++        !hookOption(this, "includeSynthetic", true)
+       ) {
+         this.getResponseObject()
+           .status(200)
+diff --git a/nodes/VoicelyAgentsTrigger/transport.ts b/nodes/VoicelyAgentsTrigger/transport.ts
+index 10ed36d..0c592ba 100644
+--- a/nodes/VoicelyAgentsTrigger/transport.ts
++++ b/nodes/VoicelyAgentsTrigger/transport.ts
+@@ -6,6 +6,7 @@ import type {
+   IHttpRequestOptions,
+   IDataObject,
+ } from "n8n-workflow";
++import { hookOption } from "../Voicely/v2/options";
+ import { serviceOrigin } from "../Voicely/v2/transport";
+ type Context = IHookFunctions | ILoadOptionsFunctions | IExecuteFunctions;
+ export async function automationRequest(
+@@ -17,7 +18,12 @@ export async function automationRequest(
+   const credentials = await context.getCredentials("voicelyAutomationApi");
+   let origin: string;
+   const timeout =
+-    options.timeout ?? context.getNodeParameter("requestTimeoutMs", 0);
++    options.timeout ??
++    hookOption(
++      context as IHookFunctions | ILoadOptionsFunctions,
++      "requestTimeoutMs",
++      0,
++    );
+   if (
+     typeof timeout !== "number" ||
+     !Number.isSafeInteger(timeout) ||
+diff --git a/package-lock.json b/package-lock.json
+index 50f23dd..fbf47a5 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "@voicelystudio/n8n-nodes-voicely",
+-  "version": "0.2.0",
++  "version": "0.2.1",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "@voicelystudio/n8n-nodes-voicely",
+-      "version": "0.2.0",
++      "version": "0.2.1",
+       "license": "MIT",
+       "devDependencies": {
+         "@n8n/node-cli": "0.54.0",
+diff --git a/package.json b/package.json
+index 98d6376..70e678b 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@voicelystudio/n8n-nodes-voicely",
+-  "version": "0.2.0",
++  "version": "0.2.1",
+   "description": "Voicely speech, transcription, voice management and agent automation for n8n workflows",
+   "license": "MIT",
+   "homepage": "https://tryvoicely.com/integrations/n8n",
+@@ -46,7 +46,6 @@
+     ],
+     "nodes": [
+       "dist/nodes/Voicely/Voicely.node.js",
+-      "dist/nodes/VoicelyAgents/VoicelyAgents.node.js",
+       "dist/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.js"
+     ]
+   },
+diff --git a/test/expanded-action.test.cjs b/test/expanded-action.test.cjs
+index 0ae7888..c85aebf 100644
+--- a/test/expanded-action.test.cjs
++++ b/test/expanded-action.test.cjs
+@@ -24,7 +24,7 @@ test('new credential/type names coexist with the unchanged old node and credenti
+  const credentials=new VoicelySuiteApi();assert.equal(node.description.name,'voicely');assert.equal(credentials.name,'voicelySuiteApi');assert.equal(credentials.properties.find(p=>p.name==='apiKey').typeOptions.password,true);assert.equal(credentials.test.request.disableFollowRedirect,true);assert.equal(node.description.usableAsTool,true);
+ });
+ test('all seven mandatory operations and all 19 formats are declared without parameter maximum caps',()=>{
+- const resources=node.description.properties.filter(p=>p.name==='operation');assert.deepEqual(resources.flatMap(p=>p.options.map(o=>o.value)),['textToSpeech','speechToText','speechToSpeech','get','getAll','createClone','delete']);const collection=node.description.properties.find(p=>p.name==='additionalOptions');assert.equal(collection.options.find(p=>p.name==='outputFormat').options.length,19);assert.equal(JSON.stringify(node.description).includes('maxValue'),false);
++ const resources=node.description.properties.filter(p=>p.name==='operation' && p.displayOptions.show.resource.some(r=>['speech','voice'].includes(r)));assert.deepEqual(resources.flatMap(p=>p.options.map(o=>o.value)),['textToSpeech','speechToText','speechToSpeech','get','getAll','createClone','delete']);const collection=node.description.properties.find(p=>p.name==='additionalOptions');assert.equal(collection.options.find(p=>p.name==='outputFormat').options.length,19);assert.equal(JSON.stringify(node.description).includes('maxValue'),false);
+ });
+ test('TTS preserves locator/expression results and control values with one binary output per input item',async()=>{
+  const f=fixture([{resource:'speech',operation:'textToSpeech',text:'first',voice:{mode:'id',value:'vly_voice_first'},additionalOptions:{model:{mode:'list',value:'vly_model_a'},languageCode:'es',voiceSettings:{speed:1.2,stability:0.7}},outputBinaryField:'speech'}, {resource:'speech',operation:'textToSpeech',text:'second',voice:'vly_voice_second'}],{items:[{json:{keep:1},binary:{keep:{data:'x',mimeType:'test'}}},{json:{keep:2}}],reply:audioReply});
+@@ -97,7 +97,7 @@ test('Get voice honors simplified and full public metadata with one paired resul
+   const [result]=await node.execute.call(f.context);assert.equal(f.calls.length,1);assert.equal(result.length,1);assert.deepEqual(result[0].pairedItem,{item:0});assert.equal(result[0].json.voice_id,metadata.voice_id);
+   if(simplify)assert.equal(result[0].json.custom_metadata,undefined);else assert.deepEqual(result[0].json.custom_metadata,metadata.custom_metadata);
+  }
+- const control=node.description.properties.find(p=>p.name==='simplify');assert.deepEqual(control.displayOptions.show.operation,['get','getAll']);
++ const control=node.description.properties.find(p=>p.name==='options').options.find(p=>p.name==='simplify');assert.deepEqual(control.displayOptions.show['/operation'],['get','getAll']);
+ });
+ 
+ test('model discovery offers only models supporting the selected speech operation',async()=>{
+diff --git a/test/expanded-agents.test.cjs b/test/expanded-agents.test.cjs
+index b8d7f11..b58273f 100644
+--- a/test/expanded-agents.test.cjs
++++ b/test/expanded-agents.test.cjs
+@@ -1,17 +1,17 @@
+ const test=require('node:test'),assert=require('node:assert/strict'),ts=require('typescript'),fs=require('node:fs');
+ require.extensions['.ts']=(module,file)=>module._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS},reportDiagnostics:true}).outputText,file);
+-const {VoicelyAgents}=require('../nodes/VoicelyAgents/VoicelyAgents.node.ts'),node=new VoicelyAgents();
++const {VoicelyV2}=require('../nodes/Voicely/v2/VoicelyV2.node.ts'),node=new VoicelyV2();
+ function fixture({resource='tool',operation='getAll',parameters={},reply,items=1,continueOnFail=false}={}){
+  const calls=[],values={resource,operation,requestTimeoutMs:0,agentId:'agent-fixture',callId:'call-fixture',deliveryId:'delivery-fixture',subscriptionId:'subscription-fixture',toolId:'tool-fixture',returnAll:false,limit:2,pageSize:1,toolName:'order_status',description:'Check order status',effect:'read',verifiedCaller:true,destination:'https://workflow.invalid/hook',inputSchema:'{"type":"object","properties":{},"required":[],"additionalProperties":false}',outputSchema:'{"type":"object","properties":{},"required":[],"additionalProperties":false}',...parameters};
+  const context={getInputData:()=>Array.from({length:items},()=>({json:{}})),getNodeParameter:(name,index,fallback)=>values[name]===undefined?fallback:values[name],getNode:()=>({id:'node-fixture',name:'Voicely Agents',type:'voicelyAgents',typeVersion:1,position:[0,0],parameters:{}}),getWorkflow:()=>({id:'workflow-fixture'}),getExecutionId:()=> 'execution-fixture',continueOnFail:()=>continueOnFail,getCredentials:async name=>{assert.equal(name,'voicelyAutomationApi');return {apiKey:'private-fixture-key',serviceUrl:'https://service.invalid',webhookSecret:'private-signing-fixture-secret'};},helpers:{httpRequestWithAuthentication:async function(name,o){assert.equal(this,context);assert.equal(name,'voicelyAutomationApi');assert.equal(o.disableFollowRedirect,true);calls.push(o);return {statusCode:200,body:reply?await reply(o):{tools:[{id:'tool-fixture'}],next_cursor:null}};}}};return {context,calls};
+ }
+-test('separate original Agents action uses protected scoped credential and is usable by AI agents',()=>{assert.equal(node.description.name,'voicelyAgents');assert.equal(node.description.usableAsTool,true);assert.equal(node.description.credentials[0].name,'voicelyAutomationApi');assert.equal(node.description.properties.find(p=>p.name==='pageSize').default,50);});
++test('Studio exposes agent resources using the scoped automation credential without Page Size',()=>{assert.equal(node.description.name,'voicely');assert.equal(node.description.usableAsTool,true);assert.ok(node.description.credentials.some(p=>p.name==='voicelyAutomationApi'));assert.equal(node.description.properties.some(p=>p.name==='pageSize'),false);});
+ test('tool registration forwards typed policy and credential secret once; no secret enters output item',async()=>{
+  const f=fixture({operation:'register',reply:async()=>({id:'registered-fixture',state:'active'})}),out=await node.execute.call(f.context);assert.equal(f.calls.length,1);assert.equal(f.calls[0].method,'POST');assert.equal(f.calls[0].body.webhook_secret,'private-signing-fixture-secret');assert.equal(f.calls[0].body.requires_verified_caller,true);assert.equal(f.calls[0].body.effect,'read');assert.equal(f.calls[0].body.agent_id,'agent-fixture');assert.equal(typeof f.calls[0].body.input_schema,'object');assert.equal(JSON.stringify(out).includes('private-signing'),false);assert.deepEqual(out[0][0].pairedItem,{item:0});
+ });
+ test('list pagination preserves cursor/agent and requested limit; return-all has no hidden positive ceiling',async()=>{
+  let count=0;const f=fixture({reply:async o=>{const url=new URL(o.url);assert.equal(url.searchParams.get('agent_id'),'agent-fixture');count++;return {tools:[{id:'tool-'+count}],next_cursor:count<4?'cursor-'+count:null};}});const out=await node.execute.call(f.context);assert.equal(out[0].length,2);assert.equal(f.calls.length,2);assert.match(f.calls[1].url,/after=cursor-1/);
+- const g=fixture({parameters:{returnAll:true,pageSize:100000},reply:async()=>({tools:[{id:'one'}],next_cursor:null})});assert.equal((await node.execute.call(g.context))[0].length,1);assert.match(g.calls[0].url,/limit=100000/);
++ const g=fixture({parameters:{returnAll:true,pageSize:100000},reply:async()=>({tools:[{id:'one'}],next_cursor:null})});assert.equal((await node.execute.call(g.context))[0].length,1);assert.match(g.calls[0].url,/limit=50/);
+ });
+ test('delivery redelivery retains original event route; no paid speech or grant request',async()=>{
+  const f=fixture({resource:'delivery',operation:'redeliver',reply:async()=>({state:'pending'})});const out=await node.execute.call(f.context);assert.match(f.calls[0].url,/\/deliveries\/delivery-fixture\/redeliver$/);assert.equal(f.calls[0].method,'POST');assert.deepEqual(f.calls[0].body,{});assert.equal(out[0][0].json.state,'pending');assert.equal(f.calls.length,1);
+@@ -23,7 +23,7 @@ test('agent/call/disable/setup routes preserve IDs and synthetic event identity
+ });
+ test('repeated/nonadvancing cursor, invalid count and unknown operation refuse without an unbounded loop',async()=>{
+  const f=fixture({parameters:{returnAll:true},reply:async()=>({tools:[],next_cursor:'same'})});await assert.rejects(node.execute.call(f.context));assert.equal(f.calls.length,2);
+- for(const parameters of [{pageSize:0},{requestTimeoutMs:-1},{limit:0}]){const g=fixture({parameters});await assert.rejects(node.execute.call(g.context));assert.equal(g.calls.length,0);}
++ for(const parameters of [{requestTimeoutMs:-1},{limit:0}]){const g=fixture({parameters});await assert.rejects(node.execute.call(g.context));assert.equal(g.calls.length,0);}
+  const g=fixture({operation:'unrecognized'});await assert.rejects(node.execute.call(g.context));assert.equal(g.calls.length,0);
+ });
+ test('request errors are sanitized and continue-on-fail preserves item linkage without automatic retry',async()=>{
+diff --git a/test/review-corrections.test.cjs b/test/review-corrections.test.cjs
+new file mode 100644
+index 0000000..514a2d9
+--- /dev/null
++++ b/test/review-corrections.test.cjs
+@@ -0,0 +1,97 @@
++const test = require('node:test'), assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path');
++const {Voicely} = require('../dist/nodes/Voicely/Voicely.node');
++const {VoicelyAgentsTrigger} = require('../dist/nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node');
++const {executionOption, hookOption} = require('../dist/nodes/Voicely/v2/options');
++const {NodeHelpers} = require('n8n-workflow');
++const studio = new Voicely().getNodeType(2), trigger = new VoicelyAgentsTrigger();
++const properties = studio.description.properties;
++const options = properties.find(p => p.name === 'options').options;
++const visible = (params, property) => NodeHelpers.displayParameter(params, property, {parameters: params, typeVersion: 2});
++function fixture(parameters, reply = {ok:true}) {
++  const calls = [], creds = [];
++  const ctx = {
++    getInputData: () => [{json:{}}], getNodeParameter: (name, index, fallback) => parameters[name] ?? fallback,
++    getNode: () => ({id:'review-node', name:'Voicely Studio', type:'voicely', typeVersion:2, parameters, position:[0,0]}),
++    getWorkflow: () => ({id:'review-workflow'}), getExecutionId: () => 'review-execution', continueOnFail: () => false,
++    getCredentials: async name => {creds.push(name);return {serviceUrl:'https://fixture.invalid',apiKey:'test-only',webhookSecret:'test-signing-secret'};},
++    helpers: {httpRequestWithAuthentication: async (name, request) => {calls.push({name,...request});return {statusCode:200,headers:{},body:typeof reply==='function'?reply(request):reply};}},
++  };
++  return {ctx,calls,creds};
++}
++test('packed manifest has one regular node and one trigger, no standalone Agents payload', () => {
++  const manifest=require('../package.json');assert.equal(manifest.n8n.nodes.length,2);
++  assert.deepEqual(manifest.n8n.nodes.map(p=>new (Object.values(require(path.join('..',p)))[0])().description.name),['voicely','voicelyAgentsTrigger']);
++  assert.equal(fs.existsSync(path.join(__dirname,'../dist/nodes/VoicelyAgents')),false);
++  assert.equal(require('../nodes/Voicely/Voicely.node.json').nodeVersion,'1.0');
++  assert.deepEqual(Object.keys(new Voicely().nodeVersions).map(Number),[1,2]);
++});
++test('all seven Studio resources have exactly one operation selector and the correct credentials', () => {
++  const expected=['agent','call','delivery','speech','subscription','tool','voice'];
++  assert.deepEqual(properties.find(p=>p.name==='resource').options.map(p=>p.value),expected);
++  for(const resource of expected){
++    const p={resource,operation:'getAll',returnAll:false};
++    assert.equal(properties.filter(f=>f.name==='operation'&&visible(p,f)).length,1,resource);
++    const credentials=studio.description.credentials.filter(c=>visible(p,c));
++    assert.equal(credentials.length,1);assert.equal(credentials[0].name,['speech','voice'].includes(resource)?'voicelySuiteApi':'voicelyAutomationApi');
++  }
++});
++test('Call Get does not show Voice locator or voice-only Simplify control', () => {
++  const p={resource:'call',operation:'get'};
++  assert.equal(visible(p,properties.find(f=>f.name==='voice')),false);
++  assert.equal(NodeHelpers.displayParameter(p,options.find(f=>f.name==='simplify'),{parameters:p,typeVersion:2},p),false);
++});
++test('Get Many UI has Return All and conditional Limit for agents, deliveries, tools and voices; no Page Size',()=>{
++  assert.equal(JSON.stringify([properties,trigger.description.properties]).includes('Page Size'),false);
++  for(const resource of ['agent','delivery','tool','voice']){
++    for(const returnAll of [false,true]){
++      const p={resource,operation:'getAll',returnAll};
++      assert.equal(properties.filter(f=>f.name==='returnAll'&&visible(p,f)).length,1,resource);
++      assert.equal(properties.filter(f=>f.name==='limit'&&visible(p,f)).length,returnAll?0:1,resource);
++    }
++  }
++});
++test('optional Studio and Trigger parameters live in collections, including all review findings',()=>{
++  for(const key of ['operationIdentity','requestTimeoutMs','includeData','purpose','effect','verifiedCaller','simplify','speechTransport']){
++    assert.equal(properties.some(p=>p.name===key),false,key);assert.ok(options.some(p=>p.name===key),key);
++  }
++  assert.deepEqual(trigger.description.properties.map(p=>p.name),['agent','options']);
++  assert.deepEqual(trigger.description.properties[1].options.map(p=>p.name),['includeSynthetic','requestTimeoutMs']);
++});
++test('new Options override legacy values including false, zero and empty identity; omitted values keep saved expressions through n8n getter',()=>{
++  let calls=[];const c={getNodeParameter:(name,index,fallback)=>{calls.push(name);return name==='options'?{requestTimeoutMs:0,simplify:false,operationIdentity:''}:999;}};
++  assert.equal(executionOption(c,0,'requestTimeoutMs',42),0);assert.equal(executionOption(c,0,'simplify',true),false);assert.equal(executionOption(c,0,'operationIdentity','old'),'');assert.ok(calls.every(n=>n==='options'));
++  const old={getNodeParameter:(name,index,fallback)=>name==='options'?{}:name==='requestTimeoutMs'?123:fallback};
++  assert.equal(executionOption(old,0,'requestTimeoutMs',0),123);assert.equal(executionOption(old,0,'simplify',true),true);
++  assert.throws(()=>executionOption({getNodeParameter:()=>[]},0,'requestTimeoutMs',0));
++});
++test('Hook options preserve zero/false and old saved fallback without public top-level UI',()=>{
++ const fresh={getNodeParameter:(name,fallback)=>name==='options'?{requestTimeoutMs:0,includeSynthetic:false}:fallback};
++ assert.equal(hookOption(fresh,'requestTimeoutMs',5000),0);assert.equal(hookOption(fresh,'includeSynthetic',true),false);
++ const old={getNodeParameter:(name,fallback)=>name==='options'?{}:name==='includeSynthetic'?false:fallback};assert.equal(hookOption(old,'includeSynthetic',true),false);
++});
++test('consolidated Call Get uses new Include Shared Data and timeout Options with automation auth only',async()=>{
++ const f=fixture({resource:'call',operation:'get',callId:'call-fixture',includeData:['context'],requestTimeoutMs:100,options:{includeData:['lead'],requestTimeoutMs:0}}, {call_id:'call-fixture'});
++ await studio.execute.call(f.ctx);assert.deepEqual(f.creds,['voicelyAutomationApi']);assert.equal(f.calls[0].name,'voicelyAutomationApi');assert.equal(f.calls[0].timeout,0);assert.equal(new URL(f.calls[0].url).searchParams.get('include'),'lead');
++});
++test('tool register new Options preserve explicit caller verification and readonly verification rules',async()=>{
++ const p={resource:'tool',operation:'register',agentId:'agent-fixture',toolName:'verify',description:'Verify test identity',destination:'https://workflow.invalid/hook',inputSchema:'{}',outputSchema:'{}',options:{purpose:'verify_caller',effect:'read',verifiedCaller:false}};
++ const f=fixture(p);await studio.execute.call(f.ctx);assert.equal(f.calls[0].body.purpose,'verify_caller');assert.equal(f.calls[0].body.requires_verified_caller,false);
++ const bad=fixture({...p,options:{...p.options,effect:'write'}});await assert.rejects(studio.execute.call(bad.ctx));assert.equal(bad.calls.length,0);
++});
++test('Agent Get Many honors Limit and Return All on the service single-list response',async()=>{
++ const records=[{agent_id:'a'},{agent_id:'b'},{agent_id:'c'}];
++ for(const all of [false,true]){const f=fixture({resource:'agent',operation:'getAll',limit:1,returnAll:all},{agents:records});const out=await studio.execute.call(f.ctx);assert.equal(out[0].length,all?3:1);assert.equal(f.calls.length,1);}
++});
++test('delivery pagination uses internal 50, respects requested limit and retains cursor',async()=>{
++ let page=0;const f=fixture({resource:'delivery',operation:'getAll',limit:51,returnAll:false,pageSize:999999},req=>{const q=new URL(req.url).searchParams;assert.equal(q.get('limit'),page===0?'50':'1');if(page)assert.equal(q.get('after'),'next');return {deliveries:Array.from({length:page++===0?50:1},(_,i)=>({id:String(i)})),next_cursor:page===1?'next':null};});
++ const out=await studio.execute.call(f.ctx);assert.equal(out[0].length,51);assert.equal(f.calls.length,2);
++});
++test('voice pagination uses internal 50 with Suite auth, independently of legacy Page Size',async()=>{
++ const f=fixture({resource:'voice',operation:'getAll',returnAll:true,pageSize:0,options:{simplify:false}}, {voices:[{voice_id:'one',name:'One',extra:true}],next_cursor:null});
++ const out=await studio.execute.call(f.ctx);assert.equal(out[0][0].json.extra,true);assert.equal(new URL(f.calls[0].url).searchParams.get('limit'),'50');assert.equal(f.calls[0].name,'voicelySuiteApi');
++});
++test('new identity option remains stable across executions and HTTP retry contract is unchanged',async()=>{
++ const p={resource:'speech',operation:'textToSpeech',text:'Fixture',voice:'voice',options:{operationIdentity:'review-business',requestTimeoutMs:0}};
++ const f=fixture(p,req=>{assert.equal(req.method,'POST');return {}}); // fail after request due intentionally non-audio response
++ await assert.rejects(studio.execute.call(f.ctx));const g=fixture(p);g.ctx.getExecutionId=()=> 'other';await assert.rejects(studio.execute.call(g.ctx));assert.equal(f.calls[0].headers['idempotency-key'],g.calls[0].headers['idempotency-key']);assert.equal(f.calls.length,1);assert.equal(g.calls.length,1);
++});
+diff --git a/test/review-migration.test.mjs b/test/review-migration.test.mjs
+new file mode 100644
+index 0000000..7b70d90
+--- /dev/null
++++ b/test/review-migration.test.mjs
+@@ -0,0 +1,27 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {upgradeV020Workflow} from '../migration/upgrade-v020.mjs';
++const prefix='@voicelystudio/n8n-nodes-voicely.';
++const fixture=()=>({id:'original-workflow',versionId:'old',active:true,staticData:{registration:'old'},pinData:{old:[]},nodes:[{id:'agent-node',name:'Agents',type:prefix+'voicelyAgents',typeVersion:1,position:[100,200],credentials:{voicelyAutomationApi:{id:'opaque-ref',name:'Existing'}},parameters:{resource:'call',operation:'get',callId:'call',includeData:['lead'],requestTimeoutMs:10}},{id:'speech-node',name:'Speech',type:prefix+'voicely',typeVersion:2,parameters:{resource:'speech',operation:'textToSpeech',operationIdentity:'={{ $json.order }}',requestTimeoutMs:0,speechTransport:'websocket'}}],connections:{Agents:{main:[[{node:'Speech',type:'main',index:0}]]}}});
++test('upgrade produces inactive new copy, preserves wiring, credentials and identity expressions, never modifies input',()=>{
++ const input=fixture(),before=JSON.stringify(input),r=upgradeV020Workflow(input);assert.equal(r.ok,true);assert.equal(JSON.stringify(input),before);assert.equal(r.workflow.id,undefined);assert.equal(r.workflow.active,false);assert.equal(r.workflow.staticData,undefined);assert.equal(r.workflow.pinData,undefined);assert.deepEqual(r.workflow.connections,input.connections);
++ assert.deepEqual(r.workflow.nodes[0].credentials,input.nodes[0].credentials);assert.equal(r.workflow.nodes[0].type,prefix+'voicely');assert.equal(r.workflow.nodes[0].typeVersion,2);assert.deepEqual(r.workflow.nodes[0].parameters.options,{includeData:['lead'],requestTimeoutMs:10});assert.equal(r.workflow.nodes[1].parameters.options.operationIdentity,'={{ $json.order }}');assert.equal(r.workflow.nodes[1].parameters.options.speechTransport,'websocket');
++});
++test('V1 speech and unrelated nodes remain byte-for-byte unchanged',()=>{
++ const w=fixture();const old={id:'old',name:'V1',type:prefix+'voicely',typeVersion:1,parameters:{options:{requestTimeoutMs:15}},credentials:{voicelyApi:{id:'old'}}};w.nodes.push(old,{id:'other',name:'Other',type:'n8n-nodes-base.set',parameters:{keep:true}});const r=upgradeV020Workflow(w);assert.deepEqual(r.workflow.nodes.slice(2),w.nodes.slice(2));
++});
++test('all five former Agents resources migrate, with previous all-agent listing retained',()=>{
++ for(const [resource,operation] of [['agent','getAll'],['call','get'],['delivery','getAll'],['subscription','test'],['tool','register']]){
++ const w=fixture();w.nodes[0].parameters={resource,operation,pageSize:500};const r=upgradeV020Workflow(w);assert.equal(r.ok,true);assert.equal(r.workflow.nodes[0].parameters.pageSize,undefined);if(resource==='agent')assert.equal(r.workflow.nodes[0].parameters.returnAll,true);
++ }
++});
++test('Trigger stays same type/version and moved timeout/setup values preserve false',()=>{
++ const w=fixture();w.nodes=[{id:'t',type:prefix+'voicelyAgentsTrigger',typeVersion:1,parameters:{agent:'a',includeSynthetic:false,requestTimeoutMs:0}}];const r=upgradeV020Workflow(w);assert.equal(r.ok,true);assert.equal(r.workflow.nodes[0].type,prefix+'voicelyAgentsTrigger');assert.deepEqual(r.workflow.nodes[0].parameters.options,{requestTimeoutMs:0,includeSynthetic:false});
++});
++test('conflicting new/old Options fail closed, with no partial workflow or leaked values',()=>{
++ const w=fixture();w.nodes[0].parameters.options={requestTimeoutMs:99};const r=upgradeV020Workflow(w);assert.equal(r.ok,false);assert.equal(r.workflow,null);assert.deepEqual(r.issues,[{code:'option_conflict',nodeId:'agent-node',field:'requestTimeoutMs'}]);
++});
++test('bad Options, unknown Agents operation/version and unselected workflows fail closed',()=>{
++ for(const change of [w=>w.nodes[0].parameters.options=[],w=>w.nodes[0].parameters.operation='unknown',w=>w.nodes[0].typeVersion=99]){const w=fixture();change(w);assert.equal(upgradeV020Workflow(w).ok,false);}
++ assert.equal(upgradeV020Workflow({nodes:[],connections:{}}).ok,false);
++});
+diff --git a/test/versioned-compatibility.test.cjs b/test/versioned-compatibility.test.cjs
+index e314aea..c6b575d 100644
+--- a/test/versioned-compatibility.test.cjs
++++ b/test/versioned-compatibility.test.cjs
+@@ -32,18 +32,18 @@ test('legacy behavior and credentials match the verified v0.1.1 source, apart fr
+  }
+ });
+ 
+-test('one same-name package registers exactly Studio, Agents and Trigger with no duplicate legacy node', () => {
++test('one same-name package registers exactly one Studio regular node and its Trigger with no duplicate legacy node', () => {
+  const manifest = require('../package.json');
+  assert.equal(manifest.name,'@voicelystudio/n8n-nodes-voicely');
+- assert.equal(manifest.version,'0.2.0');
++ assert.equal(manifest.version,'0.2.1');
+  assert.notEqual(manifest.private,true);
+- assert.equal(manifest.n8n.nodes.length,3);
++ assert.equal(manifest.n8n.nodes.length,2);
+  const names=manifest.n8n.nodes.map(file=>{
+   const exports=require(path.join(root,file));
+   const Node=Object.values(exports)[0];
+   return new Node().description.name;
+  });
+- assert.deepEqual(names,['voicely','voicelyAgents','voicelyAgentsTrigger']);
++ assert.deepEqual(names,['voicely','voicelyAgentsTrigger']);
+  assert.equal(manifest.dependencies,undefined);
+ });
+ 

@@ -1,0 +1,126 @@
+{
+  "baseline": "be48a6e1aa2e1d67bf544fd0c16256d535afbace",
+  "observedUtc": "2026-11-03T14:20:44.412654+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "beforeSha256": "01af25e2d828778eaa6eb29186f5f3604e86a923b7a0d3366723e4a3d0659dc7",
+      "afterSha256": "a584a3d26a858d2a459c908e080782154183bd6b7f3cf77a8794ae5a9b5361d0"
+    },
+    {
+      "path": "README.md",
+      "beforeSha256": "e8a9bb251081f0e93446dd7ff4a1875e8298d106855006e502a93610c33ffe91",
+      "afterSha256": "859eb9a58016c5be5273858ce9054921851fe44263b498c3025d3a7ab417a0c1"
+    },
+    {
+      "path": "examples/calling-order-verification/README.md",
+      "beforeSha256": "e8959c2c99e9df48945020dac666a06b1bfc554b9a65c09d9780317820d4f45b",
+      "afterSha256": "610bdc6f79c8099221a6e0169fcdacf326faea78ac7b5e60a28d462d0a71fb28"
+    },
+    {
+      "path": "examples/studio-v2-agent-catalog.json",
+      "beforeSha256": null,
+      "afterSha256": "0c703e3e1e001ad7b97483ef9d76e2ec81880287b02862ecf394493eaaca8079"
+    },
+    {
+      "path": "examples/studio-v2-voice-catalog.json",
+      "beforeSha256": "3f68e35594360191444ef79e51d18975c40cfd8e3da4dfd5a9632d6ada362b2c",
+      "afterSha256": "a8aaa587a5cfa54ac12b05fb6f43e555efdb003b01cd660808b0820ade08cef6"
+    },
+    {
+      "path": "migration/upgrade-v020.mjs",
+      "beforeSha256": null,
+      "afterSha256": "89c32e75cd834cf0d9ff96cd97e77d66c552eae988a762bbbf7b9bcfae08f8f4"
+    },
+    {
+      "path": "nodes/Voicely/Voicely.node.json",
+      "beforeSha256": "ae40542a03711bc8968800f878792a5116714a5f01131895e3d4a9a36b402476",
+      "afterSha256": "45817c630fac99eec80cb38f6e1d6a52399e9338b4f6992a39fadba79c51a7fc"
+    },
+    {
+      "path": "nodes/Voicely/Voicely.node.ts",
+      "beforeSha256": "c3154cbf74af41e4bb4a8e6dfcfc13cd2f4a3c6f23eaa3d272c43a4c6aeb1ff3",
+      "afterSha256": "3bbcb72c15228dec9bd41b72e8c084559bbd38df51f754626fda73f6f448e9bc"
+    },
+    {
+      "path": "nodes/Voicely/v2/VoicelyV2.node.ts",
+      "beforeSha256": "913385896380736d75955cfd8c644a24ce6aaa6d6d34948b17ef4c5c5d567905",
+      "afterSha256": "5ac52d03840cbced64713c7fa90df117ef2221bb2a668e059a24fffd5d14869a"
+    },
+    {
+      "path": "nodes/Voicely/v2/automation.ts",
+      "beforeSha256": null,
+      "afterSha256": "c6fd007985c00121e87890cff846271485a6b2c576222e9251b451e7c78ac7c9"
+    },
+    {
+      "path": "nodes/Voicely/v2/options.ts",
+      "beforeSha256": null,
+      "afterSha256": "2597cde66a67e1669f803ddb127daa3d4fb72d796471cfe4d43c5bb8383ca4ba"
+    },
+    {
+      "path": "nodes/Voicely/v2/properties.ts",
+      "beforeSha256": "139d30af2fa2d04199e8d5bfa99c9c4cffb4c6962a7049254393b62a6592d029",
+      "afterSha256": "18abb4e96c693ac2032de1342878cf1b9c4a145204d6bb74b57d599504890cf2"
+    },
+    {
+      "path": "nodes/VoicelyAgents/VoicelyAgents.node.json",
+      "beforeSha256": "b9cdbcd4d7a3656e31bdd5d790b2d74fa7b70e0696f08a56059dc6d6f6260b66",
+      "afterSha256": null
+    },
+    {
+      "path": "nodes/VoicelyAgents/VoicelyAgents.node.ts",
+      "beforeSha256": "8d2e1d374ea11fd0fb85aa4d08058d850148799d24e86169622c8803b15607c3",
+      "afterSha256": null
+    },
+    {
+      "path": "nodes/VoicelyAgents/voicely.svg",
+      "beforeSha256": "0a1992e7f2186f821710b8530b197275e72c66b320c53d9f91b74a6c0ed5a435",
+      "afterSha256": null
+    },
+    {
+      "path": "nodes/VoicelyAgentsTrigger/VoicelyAgentsTrigger.node.ts",
+      "beforeSha256": "532b634f65498229ba283b506ea1353b50366047f658dd02aaa99e917e5f78d1",
+      "afterSha256": "6ab13525f958cd0861ca502a02129c942c88fe5da4d0ad120bdcab3d4d364906"
+    },
+    {
+      "path": "nodes/VoicelyAgentsTrigger/transport.ts",
+      "beforeSha256": "854ca4ee362bc7b6b9353cb00c868c08bac9a2b0cba32d8fdd71a762f5aa361a",
+      "afterSha256": "1f90dff18c64679a16138fc0a44a06f4c7b189c12df069c71689fdcd8467bd96"
+    },
+    {
+      "path": "package-lock.json",
+      "beforeSha256": "01cffdf45605733160c02463e046ff1bfdf87cc63cec86f01d510b630e0164cf",
+      "afterSha256": "3174a82ad068d2e8d37f0e8b320009a52d8ea4c59ca5fe9c36c534c982bf3cfd"
+    },
+    {
+      "path": "package.json",
+      "beforeSha256": "8f8b7bde65a1ad3340838327f3133a99b1fa078eb71171c4b49108f81c82b97f",
+      "afterSha256": "44038a3172e89ad055a8b045cda6b04bd70803fb0b9b09116a785be9dc96968d"
+    },
+    {
+      "path": "test/expanded-action.test.cjs",
+      "beforeSha256": "0893391970767e43347d2e67149e486ad325f0495704c94676fbfe193553644b",
+      "afterSha256": "bdad8f71dd106e8ec292080b0a39210a21e08f127d5a15349d52e904547a741d"
+    },
+    {
+      "path": "test/expanded-agents.test.cjs",
+      "beforeSha256": "ece8265f30cc609dd61f03b272cc5ac793522b2b7a0fd27514200cafc73f4012",
+      "afterSha256": "5b7400638b4fd531bd754ca2c2b8d7d4ca71f8f2b4f073e48af7cb8ffcc7fe2e"
+    },
+    {
+      "path": "test/review-corrections.test.cjs",
+      "beforeSha256": null,
+      "afterSha256": "5582affc954fe8ad4c607dd26ff17a998199d2f58a67fa5cf8b21f1a4d78a2b0"
+    },
+    {
+      "path": "test/review-migration.test.mjs",
+      "beforeSha256": null,
+      "afterSha256": "2d87d12af73deb65e4773ed66a50f746ceab5a4364566d97cb06bda5368d503c"
+    },
+    {
+      "path": "test/versioned-compatibility.test.cjs",
+      "beforeSha256": "65d296f2e6d765ebf7d83d3ab0f19d72c286d9b5fe06e3858dd6a527a35725c3",
+      "afterSha256": "a47b6cd8f7f53eedf313fd0370ba85b2ef0dece124f319e5c04c7bcd4c74d716"
+    }
+  ]
+}

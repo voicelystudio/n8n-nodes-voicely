@@ -1,4 +1,5 @@
 import type { INodeProperties } from "n8n-workflow";
+import { automationProperties } from "./automation";
 const speech = { resource: ["speech"] },
   voice = { resource: ["voice"] };
 const formatIds = [
@@ -17,7 +18,12 @@ export const properties: INodeProperties[] = [
     noDataExpression: true,
     default: "speech",
     options: [
+      { name: "Agent", value: "agent" },
+      { name: "Call", value: "call" },
+      { name: "Delivery", value: "delivery" },
       { name: "Speech", value: "speech" },
+      { name: "Subscription", value: "subscription" },
+      { name: "Tool", value: "tool" },
       { name: "Voice", value: "voice" },
     ],
   },
@@ -74,7 +80,10 @@ export const properties: INodeProperties[] = [
     default: { mode: "list", value: "" },
     required: true,
     displayOptions: {
-      show: { operation: ["textToSpeech", "speechToSpeech", "get", "delete"] },
+      show: {
+        resource: ["speech", "voice"],
+        operation: ["textToSpeech", "speechToSpeech", "get", "delete"],
+      },
     },
     modes: [
       {
@@ -86,21 +95,7 @@ export const properties: INodeProperties[] = [
       { displayName: "ID", name: "id", type: "string" },
     ],
   },
-  {
-    displayName: "Speech Transport",
-    name: "speechTransport",
-    type: "options",
-    default: "http",
-    options: [
-      { name: "HTTP", value: "http" },
-      { name: "WebSocket", value: "websocket" },
-    ],
-    description:
-      "Use the same independent Service URL. WebSocket needs a supported server-side n8n host and has no replay or automatic HTTP fallback.",
-    displayOptions: {
-      show: { resource: ["speech"], operation: ["textToSpeech"] },
-    },
-  },
+
   {
     displayName: "Text",
     name: "text",
@@ -169,7 +164,7 @@ export const properties: INodeProperties[] = [
     type: "boolean",
     description: "Whether to return all results or only up to a given limit",
     default: false,
-    displayOptions: { show: { operation: ["getAll"] } },
+    displayOptions: { show: { resource: ["voice"], operation: ["getAll"] } },
   },
   {
     displayName: "Limit",
@@ -179,16 +174,12 @@ export const properties: INodeProperties[] = [
       minValue: 1,
     },
     default: 50,
-    displayOptions: { show: { operation: ["getAll"], returnAll: [false] } },
+    displayOptions: {
+      show: { resource: ["voice"], operation: ["getAll"], returnAll: [false] },
+    },
     description: "Max number of results to return",
   },
-  {
-    displayName: "Simplify",
-    name: "simplify",
-    type: "boolean",
-    default: true,
-    displayOptions: { show: { operation: ["get", "getAll"] } },
-  },
+
   {
     displayName: "Output Binary Field",
     name: "outputBinaryField",
@@ -276,28 +267,114 @@ export const properties: INodeProperties[] = [
       },
     ],
   },
+
+  ...automationProperties,
   {
-    displayName: "Operation Identity",
-    name: "operationIdentity",
-    type: "string",
-    default: "",
-    description:
-      "Use a stable business identity to safely check retries across workflow runs. Blank uses this execution, node and input item.",
-  },
-  {
-    displayName: "Request Timeout (Ms)",
-    name: "requestTimeoutMs",
-    type: "number",
-    default: 0,
-    description:
-      "Zero leaves the request without a client timeout. Server policy still applies.",
-  },
-  {
-    displayName: "Page Size",
-    name: "pageSize",
-    type: "number",
-    default: 50,
-    description: "User-selected catalog page size, without a coded maximum",
-    displayOptions: { show: { operation: ["getAll"] } },
+    displayName: "Options",
+    name: "options",
+    type: "collection",
+    default: {},
+    placeholder: "Add Option",
+    options: [
+      {
+        displayName: "Effect",
+        name: "effect",
+        type: "options",
+        default: "read",
+        displayOptions: {
+          show: { "/resource": ["tool"], "/operation": ["register"] },
+        },
+        options: [
+          { name: "Read", value: "read" },
+          { name: "Write", value: "write" },
+          { name: "Escalate or Notify", value: "escalate" },
+        ],
+        description:
+          "Writes and escalation require caller confirmation before dispatch",
+      },
+      {
+        displayName: "Include Shared Data",
+        name: "includeData",
+        type: "multiOptions",
+        default: [],
+        displayOptions: {
+          show: { "/resource": ["call"], "/operation": ["get"] },
+        },
+        options: [
+          { name: "Callback Details", value: "lead" },
+          { name: "Transcript", value: "transcript" },
+          { name: "Conversation Context", value: "context" },
+        ],
+        description:
+          "Requires explicit caller sharing permission and the matching key scopes. Expired or withdrawn details are unavailable.",
+      },
+      {
+        displayName: "Operation Identity",
+        name: "operationIdentity",
+        type: "string",
+        default: "",
+        displayOptions: { show: { "/resource": ["speech", "voice"] } },
+        description:
+          "Use a stable business identity to safely check retries across workflow runs. Blank uses this execution, node and input item.",
+      },
+      {
+        displayName: "Purpose",
+        name: "purpose",
+        type: "options",
+        default: "business",
+        displayOptions: {
+          show: { "/resource": ["tool"], "/operation": ["register"] },
+        },
+        options: [
+          { name: "Business Action", value: "business" },
+          { name: "Verify Caller", value: "verify_caller" },
+        ],
+        description:
+          "A verification tool must be read-only and must not itself require a verified caller. It returns verified and subject after your business system checks identity.",
+      },
+      {
+        displayName: "Request Timeout (Ms)",
+        name: "requestTimeoutMs",
+        type: "number",
+        default: 0,
+        description:
+          "Zero leaves the request without a client timeout. Server policy still applies.",
+      },
+      {
+        displayName: "Require Verified Caller",
+        name: "verifiedCaller",
+        type: "boolean",
+        default: true,
+        displayOptions: {
+          show: { "/resource": ["tool"], "/operation": ["register"] },
+        },
+        description:
+          "Whether to require verified caller identity before accessing sensitive information",
+      },
+      {
+        displayName: "Simplify",
+        name: "simplify",
+        type: "boolean",
+        default: true,
+        displayOptions: {
+          show: { "/resource": ["voice"], "/operation": ["get", "getAll"] },
+        },
+      },
+      {
+        displayName: "Speech Transport",
+        name: "speechTransport",
+        type: "options",
+        default: "http",
+        options: [
+          { name: "HTTP", value: "http" },
+          { name: "WebSocket", value: "websocket" },
+        ],
+        description:
+          "Use the same independent Service URL. WebSocket needs a supported server-side n8n host and has no replay or automatic HTTP fallback.",
+        displayOptions: {
+          show: { "/resource": ["speech"], "/operation": ["textToSpeech"] },
+        },
+      },
+    ],
   },
 ];

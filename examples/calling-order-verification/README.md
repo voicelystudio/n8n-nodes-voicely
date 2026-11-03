@@ -35,7 +35,7 @@ Voicely API credentials authenticate your management calls to Voicely. This Cryp
 
 Publish/activate the configured workflow in your own n8n instance and copy its HTTPS **production webhook URL**. The path in this example is `voicely-order-tools`; change it if that path is already used on your instance. A test webhook requires an active editor listener and is not the persistent endpoint for live calls.
 
-Using **Voicely Agents → Tool → Register**, connect the same HTTPS URL to your accessible agent for these contracts:
+Using **Voicely Studio → Tool → Register Version**, connect the same HTTPS URL to your accessible agent for these contracts:
 
 - `lookup_order`: read effect; arguments contain the string `reference`.
 - `verify_order`: write effect; arguments contain strings `reference` and `last4`.

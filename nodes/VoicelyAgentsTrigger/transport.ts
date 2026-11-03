@@ -6,6 +6,7 @@ import type {
   IHttpRequestOptions,
   IDataObject,
 } from "n8n-workflow";
+import { hookOption } from "../Voicely/v2/options";
 import { serviceOrigin } from "../Voicely/v2/transport";
 type Context = IHookFunctions | ILoadOptionsFunctions | IExecuteFunctions;
 export async function automationRequest(
@@ -17,7 +18,12 @@ export async function automationRequest(
   const credentials = await context.getCredentials("voicelyAutomationApi");
   let origin: string;
   const timeout =
-    options.timeout ?? context.getNodeParameter("requestTimeoutMs", 0);
+    options.timeout ??
+    hookOption(
+      context as IHookFunctions | ILoadOptionsFunctions,
+      "requestTimeoutMs",
+      0,
+    );
   if (
     typeof timeout !== "number" ||
     !Number.isSafeInteger(timeout) ||

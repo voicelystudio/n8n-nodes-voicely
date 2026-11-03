@@ -24,7 +24,7 @@ test('new credential/type names coexist with the unchanged old node and credenti
  const credentials=new VoicelySuiteApi();assert.equal(node.description.name,'voicely');assert.equal(credentials.name,'voicelySuiteApi');assert.equal(credentials.properties.find(p=>p.name==='apiKey').typeOptions.password,true);assert.equal(credentials.test.request.disableFollowRedirect,true);assert.equal(node.description.usableAsTool,true);
 });
 test('all seven mandatory operations and all 19 formats are declared without parameter maximum caps',()=>{
- const resources=node.description.properties.filter(p=>p.name==='operation');assert.deepEqual(resources.flatMap(p=>p.options.map(o=>o.value)),['textToSpeech','speechToText','speechToSpeech','get','getAll','createClone','delete']);const collection=node.description.properties.find(p=>p.name==='additionalOptions');assert.equal(collection.options.find(p=>p.name==='outputFormat').options.length,19);assert.equal(JSON.stringify(node.description).includes('maxValue'),false);
+ const resources=node.description.properties.filter(p=>p.name==='operation' && p.displayOptions.show.resource.some(r=>['speech','voice'].includes(r)));assert.deepEqual(resources.flatMap(p=>p.options.map(o=>o.value)),['textToSpeech','speechToText','speechToSpeech','get','getAll','createClone','delete']);const collection=node.description.properties.find(p=>p.name==='additionalOptions');assert.equal(collection.options.find(p=>p.name==='outputFormat').options.length,19);assert.equal(JSON.stringify(node.description).includes('maxValue'),false);
 });
 test('TTS preserves locator/expression results and control values with one binary output per input item',async()=>{
  const f=fixture([{resource:'speech',operation:'textToSpeech',text:'first',voice:{mode:'id',value:'vly_voice_first'},additionalOptions:{model:{mode:'list',value:'vly_model_a'},languageCode:'es',voiceSettings:{speed:1.2,stability:0.7}},outputBinaryField:'speech'}, {resource:'speech',operation:'textToSpeech',text:'second',voice:'vly_voice_second'}],{items:[{json:{keep:1},binary:{keep:{data:'x',mimeType:'test'}}},{json:{keep:2}}],reply:audioReply});
@@ -97,7 +97,7 @@ test('Get voice honors simplified and full public metadata with one paired resul
   const [result]=await node.execute.call(f.context);assert.equal(f.calls.length,1);assert.equal(result.length,1);assert.deepEqual(result[0].pairedItem,{item:0});assert.equal(result[0].json.voice_id,metadata.voice_id);
   if(simplify)assert.equal(result[0].json.custom_metadata,undefined);else assert.deepEqual(result[0].json.custom_metadata,metadata.custom_metadata);
  }
- const control=node.description.properties.find(p=>p.name==='simplify');assert.deepEqual(control.displayOptions.show.operation,['get','getAll']);
+ const control=node.description.properties.find(p=>p.name==='options').options.find(p=>p.name==='simplify');assert.deepEqual(control.displayOptions.show['/operation'],['get','getAll']);
 });
 
 test('model discovery offers only models supporting the selected speech operation',async()=>{

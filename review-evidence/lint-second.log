@@ -1,0 +1,15 @@
+
+> @voicelystudio/n8n-nodes-voicely@0.2.1 lint
+> n8n-node lint
+
+┌   n8n-node lint  v0.54.0
+[0m[0m
+[0m[4m/home/myeduprojects/n8n-nodes-voicely-review-v021-20261103T140631Z/nodes/Voicely/v2/properties.ts[24m[0m
+[0m  [2m274:3[22m  [31merror[39m  Alphabetize by 'name'. Order: Effect | Include Shared Data | Operation Identity | Purpose | Request Timeout (Ms) | Require Verified Caller | Simplify | Speech Transport [non-autofixable]  [2mn8n-nodes-base/node-param-collection-type-unsorted-items[22m[0m
+[0m[0m
+[0m[31m[1m✖ 1 problem (1 error, 0 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[0m
+(node:346794) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:346807) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

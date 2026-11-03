@@ -1,6 +1,6 @@
 {
   "node": "@voicelystudio/n8n-nodes-voicely.voicely",
-  "nodeVersion": "2.0",
+  "nodeVersion": "1.0",
   "codexVersion": "1.0",
   "categories": [
     "Communication"
