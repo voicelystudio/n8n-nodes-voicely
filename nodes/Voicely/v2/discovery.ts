@@ -75,6 +75,24 @@ export function modelRows(raw: unknown, operation?: string): IDataObject[] {
         model_id: row.model_id,
         name: row.name,
         ...(row.operations === undefined ? {} : { operations: row.operations }),
+        ...(row.model_contract === "api-v1"
+          ? { model_contract: "api-v1" }
+          : {}),
+        ...(["provider_streaming", "buffered_segments"].includes(
+          String(row.streaming_mode),
+        )
+          ? { streaming_mode: row.streaming_mode }
+          : {}),
+        ...(row.streaming === "available" ? { streaming: "available" } : {}),
+        ...(typeof row.preview === "boolean" ? { preview: row.preview } : {}),
+        ...(Array.isArray(row.transports) &&
+        row.transports.every((t) => ["http", "websocket"].includes(String(t)))
+          ? { transports: row.transports }
+          : {}),
+        ...(Array.isArray(row.languages) ? { languages: row.languages } : {}),
+        ...(Array.isArray(row.language_options)
+          ? { language_options: row.language_options }
+          : {}),
       };
     })
     .filter(
@@ -82,4 +100,37 @@ export function modelRows(raw: unknown, operation?: string): IDataObject[] {
         !operation ||
         (Array.isArray(row.operations) && row.operations.includes(operation)),
     );
+}
+
+export function speechModel(options: IDataObject): {
+  id?: string;
+  contract?: "api-v1";
+} {
+  const api = selectedModel(options.apiModel),
+    legacy = selectedModel(options.model);
+  if (api && legacy)
+    throw new CatalogSelectionError(
+      "Select Model or Legacy Model, not both. Clear the old selection before changing contracts.",
+    );
+  return api ? { id: api, contract: "api-v1" } : { id: legacy };
+}
+export function catalogVoiceSelection(value: unknown): {
+  query: URLSearchParams;
+  route: string;
+} {
+  const options = catalogOptions(value),
+    chosen = speechModel(options);
+  const query = voiceFilters({ ...options, model: chosen.id });
+  if (chosen.contract) {
+    if (operationScope(options.speechOperation) !== "speech.synthesize")
+      throw new CatalogSelectionError(
+        "API Model is for Text to Speech. Use Legacy Model for Speech to Speech.",
+      );
+    return { query, route: "/v2/tts/voices" };
+  }
+  return { query, route: "/v1/voices" };
+}
+
+export function selectionIssue(message: string): never {
+  throw new CatalogSelectionError(message);
 }

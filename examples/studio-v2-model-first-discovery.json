@@ -26,10 +26,7 @@
         "resource": "model",
         "operation": "getAll",
         "returnAll": false,
-        "limit": 1,
-        "catalogOptions": {
-          "speechOperation": "textToSpeech"
-        }
+        "limit": 1
       }
     },
     {
@@ -48,7 +45,7 @@
         "limit": 3,
         "catalogOptions": {
           "speechOperation": "textToSpeech",
-          "model": {
+          "apiModel": {
             "mode": "id",
             "value": "={{ $json.model_id }}"
           }

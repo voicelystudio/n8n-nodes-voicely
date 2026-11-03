@@ -44,6 +44,7 @@ export async function websocketRequest(
     text: string;
     format: string;
     model: string;
+    modelContract?: "api-v1";
     language: string;
     voiceSettings?: IDataObject;
     timeout: number;
@@ -75,7 +76,7 @@ export async function websocketRequest(
   if (!key)
     throw new NodeOperationError(context.getNode(), "Set a Voicely API key");
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-  url.pathname = `/v1/text-to-speech/${encodeURIComponent(input.voice)}/stream-input`;
+  url.pathname = `/${input.modelContract === "api-v1" ? "v2" : "v1"}/text-to-speech/${encodeURIComponent(input.voice)}/stream-input`;
   url.searchParams.set("output_format", input.format);
   if (input.model) url.searchParams.set("model_id", input.model);
   if (input.language) url.searchParams.set("language_code", input.language);

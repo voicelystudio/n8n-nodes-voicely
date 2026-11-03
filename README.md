@@ -37,7 +37,7 @@ For **Voicely Agents API**, set a strong random **Webhook Signing Secret** priva
 
 Start with the inactive, credential-free [Studio voice catalog example](examples/studio-v2-voice-catalog.json). Import it, select your Studio credential and execute it to list voices without generating audio.
 
-For model-first discovery, use **Model → Get Many** with optional **Catalog Options → Speech Operation**. The service supplies model IDs/names and advertised operations; the connector does not invent model, voice or language mappings. Return All and Limit control the returned model items.
+For current TTS discovery, use **Model → Get Many**. It lists the seven API-consistent TTS models, including model-specific languages and provider-streaming versus buffered-segment delivery mode. STT/STS models are chosen inside their own Speech operations. The service supplies model IDs/names and advertised operations; the connector does not invent model, voice or language mappings. Return All and Limit control the returned model items. These new selections require the matching Suite backend with versioned `/v2` TTS routes.
 
 For model-specific voices, use **Voice → Get Many → Catalog Options**: first add Speech Operation (Text to Speech or Speech to Speech), then Model. The node forwards both filters on every catalog page and uses the service's compatible stock/owned voice results. Leave Catalog Options empty to retain the original unfiltered management catalog; that list is not a promise of universal model compatibility. STT is a model-only workflow and has no voice selector.
 
@@ -52,6 +52,16 @@ STS presets separate voice identity from conversion settings:
 Fixed presets reject incompatible overrides. Catalog availability, pricing, concurrency and deadlines come from the service. CPU conversion can take longer than the audio duration; choose a suitable workflow timeout. The connector does not grant credits. The generous n8n builder campaign is not active as part of this release.
 
 Existing [HTTP speech](examples/http-speech.json), [WebSocket speech](examples/websocket-speech.json) and [AI voice-tool](examples/ai-agent-voices.json) examples continue to target node version 1. Their credentials remain separate from Studio version 2.
+
+### Model contract compatibility
+
+The new optional **Model** field uses `additionalOptions.apiModel` for generation and `catalogOptions.apiModel` for compatible-voice discovery. It explicitly uses the Suite's versioned `/v2` TTS contract, aligned with the seven Public API names/IDs. The new catalog is `/v2/models`; compatible stock voices use `/v2/tts/voices`; HTTP and WebSocket synthesis use `/v2/text-to-speech/{voice}` paths.
+
+Existing `additionalOptions.model` and `catalogOptions.model` are retained as **Legacy Model** and continue using `/v1` Suite routes. The old Suite `voicely-flash-v1` mapping was 3.8 Flash, while the canonical Public API ID maps to Voicely Classic/2.5 Flash. Versioning preserves both without silently changing existing workflows. Leave Model blank to keep the old service default. Never select both Model and Legacy Model; the node refuses the conflict.
+
+New canonical TTS exposes public stock voices, matching the Public API contract. Existing owned/cloned profiles and Native Speech remain on the legacy Suite contract; they are not advertised as compatible with every new model. STT/STS, legacy V1 workflows and their billing contracts remain separate. Model capabilities describe implementation, not certification of every provider/language combination.
+
+Choose **Options → Speech Transport → WebSocket** for supported TTS models. HD uses buffered segments; the other six use provider streaming. Audio chunks are received during execution, but the n8n node emits a complete binary item after success. It does not emit partial successful items or promise live browser playback. No automatic HTTP fallback, provider substitution or retry occurs.
 
 ### Optional chained discovery
 

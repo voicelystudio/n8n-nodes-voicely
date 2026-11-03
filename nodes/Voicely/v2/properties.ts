@@ -102,7 +102,7 @@ export const properties: INodeProperties[] = [
         default: "",
       },
       {
-        displayName: "Model",
+        displayName: "Legacy Model",
         name: "model",
         description:
           "Choose a model before selecting a voice. After changing the model, reselect a compatible voice. Blank keeps the service default; presets and Custom choices come from the service.",
@@ -115,6 +115,25 @@ export const properties: INodeProperties[] = [
             name: "list",
             type: "list",
             typeOptions: { searchListMethod: "getModels", searchable: true },
+          },
+          { displayName: "ID", name: "id", type: "string" },
+        ],
+      },
+      {
+        displayName: "Model",
+        name: "apiModel",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        displayOptions: { show: { "/operation": ["textToSpeech"] } },
+        description:
+          "API-consistent TTS models. Clear Legacy Model before selecting this. Blank preserves the existing Suite default.",
+        typeOptions: { loadOptionsDependsOn: ["operation"] },
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            typeOptions: { searchListMethod: "getApiModels", searchable: true },
           },
           { displayName: "ID", name: "id", type: "string" },
         ],
@@ -166,11 +185,11 @@ export const properties: INodeProperties[] = [
     default: {},
     placeholder: "Add Filter",
     displayOptions: {
-      show: { resource: ["model", "voice"], operation: ["getAll"] },
+      show: { resource: ["voice"], operation: ["getAll"] },
     },
     options: [
       {
-        displayName: "Model",
+        displayName: "Legacy Model",
         name: "model",
         type: "resourceLocator",
         default: { mode: "list", value: "" },
@@ -194,6 +213,32 @@ export const properties: INodeProperties[] = [
             name: "list",
             type: "list",
             typeOptions: { searchListMethod: "getModels", searchable: true },
+          },
+          { displayName: "ID", name: "id", type: "string" },
+        ],
+      },
+      {
+        displayName: "Model",
+        name: "apiModel",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        displayOptions: {
+          show: {
+            "/resource": ["voice"],
+            "/catalogOptions.speechOperation": ["textToSpeech"],
+          },
+        },
+        description:
+          "Choose API-consistent TTS model; do not also select Legacy Model",
+        typeOptions: {
+          loadOptionsDependsOn: ["catalogOptions.speechOperation", "resource"],
+        },
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            typeOptions: { searchListMethod: "getApiModels", searchable: true },
           },
           { displayName: "ID", name: "id", type: "string" },
         ],
@@ -238,8 +283,10 @@ export const properties: INodeProperties[] = [
         "resource",
         "operation",
         "additionalOptions.model",
+        "additionalOptions.apiModel",
         "catalogOptions.speechOperation",
         "catalogOptions.model",
+        "catalogOptions.apiModel",
       ],
     },
     default: { mode: "list", value: "" },

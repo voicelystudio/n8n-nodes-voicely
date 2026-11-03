@@ -12,13 +12,14 @@ function fixture(parameters,reply,items=1){
 function picker(parameters,reply){const f=fixture(parameters,reply);f.context.getNodeParameter=(name,fallback)=>parameters[name]===undefined?fallback:parameters[name];return f;}
 test('Model Get Many uses live service catalog, safe fields, limit and paired item; no speech request',async()=>{
  const f=fixture({resource:'model',operation:'getAll',returnAll:false,limit:1},models);const out=await node.execute.call(f.context);
- assert.equal(out[0].length,1);assert.deepEqual(out[0][0].json,{model_id:'tts-a',name:'Voicely Narration',operations:['speech.synthesize']});assert.deepEqual(out[0][0].pairedItem,{item:0});assert.equal(f.calls.length,1);assert.equal(new URL(f.calls[0].url).pathname,'/v1/models');assert.equal(f.calls[0].method,'GET');assert.equal(f.calls[0].body,undefined);
+ assert.equal(out[0].length,1);assert.deepEqual(out[0][0].json,{model_id:'tts-a',name:'Voicely Narration',operations:['speech.synthesize']});assert.deepEqual(out[0][0].pairedItem,{item:0});assert.equal(f.calls.length,1);assert.equal(new URL(f.calls[0].url).pathname,'/v2/models');assert.equal(f.calls[0].method,'GET');assert.equal(f.calls[0].body,undefined);
 });
 test('Model Get Many Return All accepts array and envelope, outputs one model per item without invented languages/defaults',async()=>{
- for(const body of [models,{models}]){const f=fixture({resource:'model',operation:'getAll',returnAll:true},body);const out=await node.execute.call(f.context);assert.equal(out[0].length,4);assert.ok(out[0].every(v=>v.json.languages===undefined&&v.json.default===undefined));}
+ for(const body of [models,{models}]){const f=fixture({resource:'model',operation:'getAll',returnAll:true},body);const out=await node.execute.call(f.context);assert.equal(out[0].length,2);assert.ok(out[0].every(v=>v.json.languages===undefined&&v.json.default===undefined));}
 });
 test('Model Get Many filters TTS, STT and STS by advertised operations',async()=>{
- for(const [speechOperation,ids] of [['textToSpeech',['tts-a','tts-b']],['speechToText',['stt-a']],['speechToSpeech',['sts-a']]]){const f=fixture({resource:'model',operation:'getAll',returnAll:true,catalogOptions:{speechOperation}},models);assert.deepEqual((await node.execute.call(f.context))[0].map(v=>v.json.model_id),ids);}
+ const f=fixture({resource:'model',operation:'getAll',returnAll:true,catalogOptions:{speechOperation:'textToSpeech'}},models);assert.deepEqual((await node.execute.call(f.context))[0].map(v=>v.json.model_id),['tts-a','tts-b']);
+ for(const speechOperation of ['speechToText','speechToSpeech']){const g=fixture({resource:'model',operation:'getAll',returnAll:true,catalogOptions:{speechOperation}},models);await assert.rejects(node.execute.call(g.context),/lists TTS models/);assert.equal(g.calls.length,0);}
 });
 test('Model Get Many invalid operation or limit rejects before any request',async()=>{
  for(const params of [{catalogOptions:{speechOperation:'unknown'}},{limit:0}]){const f=fixture({resource:'model',operation:'getAll',limit:3,...params},models);await assert.rejects(node.execute.call(f.context));assert.equal(f.calls.length,0);}
@@ -28,7 +29,7 @@ test('Model empty/unknown catalog handling does not fabricate entries',async()=>
  for(const body of [{},{models:'wrong'},[{model_id:'a',name:''}],[...models,models[0]],[{model_id:'a',name:'A',operations:'speech.synthesize'}]])assert.throws(()=>modelRows(body));
 });
 test('Model Get Many supports input item linkage and Continue On Fail without automatic retry',async()=>{
- const f=fixture({resource:'model',operation:'getAll',returnAll:true},models,2);const out=await node.execute.call(f.context);assert.equal(out[0].length,8);assert.equal(out[0][7].pairedItem.item,1);
+ const f=fixture({resource:'model',operation:'getAll',returnAll:true},models,2);const out=await node.execute.call(f.context);assert.equal(out[0].length,4);assert.equal(out[0][3].pairedItem.item,1);
  const g=fixture({resource:'model',operation:'getAll',returnAll:true},()=>{throw Error('private-provider-mapping');},2);g.context.continueOnFail=()=>true;const bad=await node.execute.call(g.context);assert.equal(bad[0].length,2);assert.equal(g.calls.length,2);assert.doesNotMatch(JSON.stringify(bad),/private-provider/);
 });
 test('Voice Get Many forwards selected model and operation on every cursor page and deduplicates repeated stock voices',async()=>{

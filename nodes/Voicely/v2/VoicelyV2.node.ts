@@ -15,9 +15,11 @@ import { executionOption } from "./options";
 import {
   catalogOptions,
   CatalogSelectionError,
+  selectionIssue,
   modelRows,
   operationScope,
-  voiceFilters,
+  speechModel,
+  catalogVoiceSelection,
 } from "./discovery";
 import { websocketRequest } from "./websocket";
 import {
@@ -62,16 +64,6 @@ function optionsOf(value: unknown): IDataObject {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw Error("options_invalid");
   return value as IDataObject;
-}
-function optionalId(value: unknown): string | undefined {
-  if (value === undefined || value === "") return undefined;
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    (value as { value?: unknown }).value === ""
-  )
-    return undefined;
-  return selectedId(value);
 }
 function jsonField(value: unknown): unknown {
   if (typeof value === "string") return JSON.parse(value);
@@ -137,22 +129,32 @@ export class VoicelyV2 implements INodeType {
           required = ["textToSpeech", "speechToSpeech"].includes(operation)
             ? operationScope(operation)
             : undefined;
-        const query =
+        const catalogSelection =
           resource === "voice" && operation === "getAll"
-            ? voiceFilters(this.getNodeParameter("catalogOptions", {}))
-            : new URLSearchParams();
+            ? catalogVoiceSelection(this.getNodeParameter("catalogOptions", {}))
+            : undefined;
+        let route = catalogSelection?.route ?? "/v1/voices";
+        const query = catalogSelection?.query ?? new URLSearchParams();
         if (paginationToken) query.set("after", paginationToken);
         if (required) {
           query.set("operation", required);
           const options = optionsOf(
               this.getNodeParameter("additionalOptions", {}) ?? {},
             ),
-            model = optionalId(options.model);
+            selected = speechModel(options),
+            model = selected.id;
+          if (selected.contract) {
+            if (operation !== "textToSpeech")
+              throw new NodeOperationError(
+                this.getNode(),
+                "API Model is for Text to Speech.",
+              );
+            route = "/v2/tts/voices";
+          }
           if (model) query.set("model_id", model);
         }
         const page = listPage(
-          (await request(this, "/v1/voices" + (query.size ? "?" + query : "")))
-            .body,
+          (await request(this, route + (query.size ? "?" + query : ""))).body,
         );
         const needle = filter?.toLocaleLowerCase() ?? "";
         return {
@@ -164,6 +166,34 @@ export class VoicelyV2 implements INodeType {
             )
             .map((v) => ({ name: String(v.name), value: String(v.voice_id) })),
           ...(page.next ? { paginationToken: page.next } : {}),
+        };
+      },
+      async getApiModels(
+        this: ILoadOptionsFunctions,
+        filter?: string,
+      ): Promise<INodeListSearchResult> {
+        const list = modelRows(
+          (await request(this, "/v2/models")).body,
+          "speech.synthesize",
+        );
+        return {
+          results: list
+            .filter(
+              (v) =>
+                !filter ||
+                String(v.name).toLowerCase().includes(filter.toLowerCase()) ||
+                String(v.model_id).toLowerCase().includes(filter.toLowerCase()),
+            )
+            .map((v) => ({
+              name: String(v.name),
+              value: String(v.model_id),
+              description:
+                v.streaming_mode === "buffered_segments"
+                  ? "HTTP or buffered WebSocket segments"
+                  : v.streaming_mode === "provider_streaming"
+                    ? "HTTP or streaming WebSocket"
+                    : "See service transport support",
+            })),
         };
       },
       async getModels(
@@ -228,14 +258,23 @@ export class VoicelyV2 implements INodeType {
           const filters = catalogOptions(
               this.getNodeParameter("catalogOptions", index, {}),
             ),
-            scope = operationScope(filters.speechOperation),
+            scope =
+              operationScope(filters.speechOperation) ?? "speech.synthesize",
             all = Boolean(this.getNodeParameter("returnAll", index, false)),
             limit = all
               ? undefined
               : positiveInteger(this.getNodeParameter("limit", index, 50)),
+            checkedScope =
+              scope === "speech.synthesize"
+                ? scope
+                : (() => {
+                    selectionIssue(
+                      "Model Get Many lists TTS models. STT and STS models remain under their Speech operations.",
+                    );
+                  })(),
             rows = modelRows(
-              (await request(this, "/v1/models", { timeout })).body,
-              scope,
+              (await request(this, "/v2/models", { timeout })).body,
+              checkedScope,
             );
           for (const row of limit === undefined ? rows : rows.slice(0, limit))
             output.push({ json: row, pairedItem: { item: index } });
@@ -293,9 +332,10 @@ export class VoicelyV2 implements INodeType {
               : positiveInteger(this.getNodeParameter("limit", index)),
             pageSize = 50,
             simplify = Boolean(executionOption(this, index, "simplify", true));
-          const filters = voiceFilters(
-            this.getNodeParameter("catalogOptions", index, {}),
-          );
+          const catalogSelection = catalogVoiceSelection(
+              this.getNodeParameter("catalogOptions", index, {}),
+            ),
+            filters = catalogSelection.query;
           let after: string | null = null,
             remaining = limit;
           const seen = new Set<string>(),
@@ -312,7 +352,11 @@ export class VoicelyV2 implements INodeType {
             );
             if (after) query.set("after", after);
             const page = listPage(
-              (await request(this, "/v1/voices?" + query, { timeout })).body,
+              (
+                await request(this, catalogSelection.route + "?" + query, {
+                  timeout,
+                })
+              ).body,
             );
             for (const voice of [...page.stock, ...page.voices]) {
               const id = String(voice.voice_id);
@@ -399,11 +443,16 @@ export class VoicelyV2 implements INodeType {
           resource === "speech" &&
           ["textToSpeech", "speechToText", "speechToSpeech"].includes(operation)
         ) {
-          const model = optionalId(parameters.model),
+          const selected = speechModel(parameters),
+            model = selected.id,
             language =
               parameters.languageCode === undefined
                 ? undefined
                 : String(parameters.languageCode);
+          if (selected.contract && operation !== "textToSpeech")
+            selectionIssue(
+              "API Model is for Text to Speech. Select the operation's model instead.",
+            );
           format = String(parameters.outputFormat ?? "mp3_44100_128");
           if (operation !== "speechToText") {
             audioMetadata(format);
@@ -419,7 +468,9 @@ export class VoicelyV2 implements INodeType {
             if (!text.trim()) throw Error("speech_text_required");
             const id = selectedId(this.getNodeParameter("voice", index));
             route =
-              "/v1/text-to-speech/" +
+              (selected.contract
+                ? "/v2/text-to-speech/"
+                : "/v1/text-to-speech/") +
               encodeURIComponent(id) +
               "?output_format=" +
               encodeURIComponent(format);
@@ -475,7 +526,8 @@ export class VoicelyV2 implements INodeType {
               voice: selectedId(this.getNodeParameter("voice", index)),
               text: String(this.getNodeParameter("text", index)),
               format: format!,
-              model: optionalId(parameters.model) ?? "",
+              model: speechModel(parameters).id ?? "",
+              modelContract: speechModel(parameters).contract,
               language:
                 parameters.languageCode === undefined
                   ? ""
