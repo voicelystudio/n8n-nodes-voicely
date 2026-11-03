@@ -126,11 +126,94 @@ export function catalogVoiceSelection(value: unknown): {
       throw new CatalogSelectionError(
         "API Model is for Text to Speech. Use Legacy Model for Speech to Speech.",
       );
+    const language = selectedModel(options.language);
+    if (language) query.set("language_code", language);
     return { query, route: "/v2/tts/voices" };
   }
+  if (selectedModel(options.language))
+    throw new CatalogSelectionError(
+      "Choose Model before selecting Language. Legacy voice discovery is unchanged.",
+    );
   return { query, route: "/v1/voices" };
 }
 
 export function selectionIssue(message: string): never {
   throw new CatalogSelectionError(message);
+}
+
+// Read only the public, model-specific selection registry. Never invent locale codes.
+export function languageRows(
+  raw: unknown,
+  expectedModel?: string,
+): IDataObject[] {
+  const page = asObject(raw),
+    rows = page.languages;
+  if (
+    typeof page.model_id !== "string" ||
+    (expectedModel !== undefined && page.model_id !== expectedModel) ||
+    !Array.isArray(rows)
+  )
+    throw new CatalogSelectionError(
+      "The service returned an invalid language catalog.",
+    );
+  const seen = new Set<string>();
+  return rows.map(asObject).map((row) => {
+    if (
+      typeof row.language_id !== "string" ||
+      !row.language_id ||
+      typeof row.name !== "string" ||
+      !row.name ||
+      seen.has(row.language_id) ||
+      typeof row.preview_in_voicely !== "boolean"
+    )
+      throw new CatalogSelectionError(
+        "The service returned an invalid language catalog.",
+      );
+    seen.add(row.language_id);
+    return {
+      model_id: page.model_id,
+      language_id: row.language_id,
+      name: row.name,
+      preview_in_voicely: row.preview_in_voicely,
+    };
+  });
+}
+export function compactModel(row: IDataObject): IDataObject {
+  const choices = row.language_options,
+    rest = { ...row };
+  delete rest.languages;
+  delete rest.language_options;
+  delete rest.streaming;
+  return {
+    ...rest,
+    ...(Array.isArray(choices)
+      ? {
+          language_option_count: choices.length,
+          preview_language_option_count: choices.filter(
+            (r) => asObject(r).preview_in_voicely === true,
+          ).length,
+        }
+      : {}),
+  };
+}
+export function speechLanguage(options: IDataObject): string | undefined {
+  const choice = selectedModel(options.language),
+    legacy = options.languageCode;
+  if (legacy !== undefined && typeof legacy !== "string")
+    throw new CatalogSelectionError("Set a valid language code.");
+  if (choice && legacy)
+    throw new CatalogSelectionError(
+      "Select Language or Language Code, not both. Clear the old language code first.",
+    );
+  if (choice && !speechModel(options).contract)
+    throw new CatalogSelectionError(
+      "Choose Model before selecting Language. Existing workflows can keep Language Code.",
+    );
+  return choice ?? (legacy || undefined);
+}
+export function languageCatalogModel(value: unknown): string {
+  const model = selectedModel(value);
+  if (!model)
+    throw new CatalogSelectionError("Choose Model before loading languages.");
+  return model;
 }

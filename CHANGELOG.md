@@ -37,3 +37,10 @@
   output, no automatic retry/fallback and no new runtime dependency or accounting layer.
 - Indexed validation errors for empty or non-string workflow expressions before any paid submission.
 - Importable HTTP and WebSocket workflow examples and test-gated provenance publication workflow.
+
+### 0.2.1 staging refinement — model/language/voice
+
+- Compact model discovery with optional detailed output.
+- Model-specific Language Get Many and searchable TTS language selection.
+- Voice discovery validates selected model and language; preserve legacy saved fields and routing.
+- No new regular node, Page Size parameter, runtime dependencies or publication.

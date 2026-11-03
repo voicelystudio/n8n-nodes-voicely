@@ -21,6 +21,7 @@ export const properties: INodeProperties[] = [
       { name: "Agent", value: "agent" },
       { name: "Call", value: "call" },
       { name: "Delivery", value: "delivery" },
+      { name: "Language", value: "language" },
       { name: "Model", value: "model" },
       { name: "Speech", value: "speech" },
       { name: "Subscription", value: "subscription" },
@@ -96,10 +97,37 @@ export const properties: INodeProperties[] = [
         displayOptions: { show: { "/operation": ["speechToText"] } },
       },
       {
+        displayName: "Language",
+        name: "language",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        displayOptions: { show: { "/operation": ["textToSpeech"] } },
+        description:
+          "Choose Model first, then a supported language. Preview marks Voicely testing status. Blank keeps existing automatic language behavior.",
+        typeOptions: {
+          loadOptionsDependsOn: [
+            "additionalOptions.apiModel",
+            "additionalOptions.model",
+            "operation",
+          ],
+        },
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            typeOptions: { searchListMethod: "getLanguages", searchable: true },
+          },
+          { displayName: "ID", name: "id", type: "string" },
+        ],
+      },
+      {
         displayName: "Language Code",
         name: "languageCode",
         type: "string",
         default: "",
+        description:
+          "Existing language code for saved workflows, transcription and conversion. For a new TTS Model, use Language to browse supported choices; do not select both.",
       },
       {
         displayName: "Legacy Model",
@@ -179,6 +207,35 @@ export const properties: INodeProperties[] = [
     options: [{ name: "Get Many", value: "getAll", action: "Get many models" }],
   },
   {
+    displayName: "Operation",
+    name: "operation",
+    type: "options",
+    noDataExpression: true,
+    default: "getAll",
+    displayOptions: { show: { resource: ["language"] } },
+    options: [
+      { name: "Get Many", value: "getAll", action: "Get many languages" },
+    ],
+  },
+  {
+    displayName: "Model",
+    name: "languageModel",
+    type: "resourceLocator",
+    required: true,
+    default: { mode: "list", value: "" },
+    displayOptions: { show: { resource: ["language"], operation: ["getAll"] } },
+    description: "The TTS model whose selectable languages to retrieve",
+    modes: [
+      {
+        displayName: "From List",
+        name: "list",
+        type: "list",
+        typeOptions: { searchListMethod: "getApiModels", searchable: true },
+      },
+      { displayName: "ID", name: "id", type: "string" },
+    ],
+  },
+  {
     displayName: "Catalog Options",
     name: "catalogOptions",
     type: "collection",
@@ -188,6 +245,33 @@ export const properties: INodeProperties[] = [
       show: { resource: ["voice"], operation: ["getAll"] },
     },
     options: [
+      {
+        displayName: "Language",
+        name: "language",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        displayOptions: {
+          show: { "/catalogOptions.speechOperation": ["textToSpeech"] },
+        },
+        description:
+          "Choose Model first. The service validates this model/language combination; voices may be shared across languages.",
+        typeOptions: {
+          loadOptionsDependsOn: [
+            "catalogOptions.speechOperation",
+            "catalogOptions.apiModel",
+            "catalogOptions.model",
+          ],
+        },
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            typeOptions: { searchListMethod: "getLanguages", searchable: true },
+          },
+          { displayName: "ID", name: "id", type: "string" },
+        ],
+      },
       {
         displayName: "Legacy Model",
         name: "model",
@@ -284,6 +368,9 @@ export const properties: INodeProperties[] = [
         "operation",
         "additionalOptions.model",
         "additionalOptions.apiModel",
+        "additionalOptions.language",
+        "additionalOptions.languageCode",
+        "catalogOptions.language",
         "catalogOptions.speechOperation",
         "catalogOptions.model",
         "catalogOptions.apiModel",
@@ -377,7 +464,7 @@ export const properties: INodeProperties[] = [
     description: "Whether to return all results or only up to a given limit",
     default: false,
     displayOptions: {
-      show: { resource: ["model", "voice"], operation: ["getAll"] },
+      show: { resource: ["language", "model", "voice"], operation: ["getAll"] },
     },
   },
   {
@@ -390,7 +477,7 @@ export const properties: INodeProperties[] = [
     default: 50,
     displayOptions: {
       show: {
-        resource: ["model", "voice"],
+        resource: ["language", "model", "voice"],
         operation: ["getAll"],
         returnAll: [false],
       },
@@ -495,8 +582,13 @@ export const properties: INodeProperties[] = [
         name: "simplify",
         type: "boolean",
         default: true,
+        description:
+          "Whether to return a simplified version of the response instead of the raw data",
         displayOptions: {
-          show: { "/resource": ["voice"], "/operation": ["get", "getAll"] },
+          show: {
+            "/resource": ["model", "voice"],
+            "/operation": ["get", "getAll"],
+          },
         },
       },
       {

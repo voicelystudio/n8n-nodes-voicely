@@ -20,6 +20,10 @@ import {
   operationScope,
   speechModel,
   catalogVoiceSelection,
+  languageRows,
+  languageCatalogModel,
+  speechLanguage,
+  compactModel,
 } from "./discovery";
 import { websocketRequest } from "./websocket";
 import {
@@ -107,7 +111,9 @@ export class VoicelyV2 implements INodeType {
       {
         name: "voicelySuiteApi",
         required: true,
-        displayOptions: { show: { resource: ["model", "speech", "voice"] } },
+        displayOptions: {
+          show: { resource: ["language", "model", "speech", "voice"] },
+        },
       },
       {
         name: "voicelyAutomationApi",
@@ -152,6 +158,9 @@ export class VoicelyV2 implements INodeType {
             route = "/v2/tts/voices";
           }
           if (model) query.set("model_id", model);
+          const language = speechLanguage(options);
+          if (selected.contract && language)
+            query.set("language_code", language);
         }
         const page = listPage(
           (await request(this, route + (query.size ? "?" + query : ""))).body,
@@ -166,6 +175,50 @@ export class VoicelyV2 implements INodeType {
             )
             .map((v) => ({ name: String(v.name), value: String(v.voice_id) })),
           ...(page.next ? { paginationToken: page.next } : {}),
+        };
+      },
+      async getLanguages(
+        this: ILoadOptionsFunctions,
+        filter?: string,
+      ): Promise<INodeListSearchResult> {
+        const resource = String(this.getNodeParameter("resource", "speech"));
+        const options =
+          resource === "voice"
+            ? catalogOptions(this.getNodeParameter("catalogOptions", {}))
+            : optionsOf(this.getNodeParameter("additionalOptions", {}));
+        const selected = speechModel(options);
+        if (!selected.contract)
+          selectionIssue(
+            "Choose Model before loading languages. Legacy workflows can keep Language Code.",
+          );
+        const model = languageCatalogModel(selected.id);
+        const rows = languageRows(
+          (
+            await request(
+              this,
+              "/v2/tts/languages?model_id=" + encodeURIComponent(model),
+            )
+          ).body,
+          model,
+        );
+        return {
+          results: rows
+            .filter(
+              (row) =>
+                !filter ||
+                String(row.name).toLowerCase().includes(filter.toLowerCase()) ||
+                String(row.language_id)
+                  .toLowerCase()
+                  .includes(filter.toLowerCase()),
+            )
+            .map((row) => ({
+              name:
+                String(row.name) + (row.preview_in_voicely ? " (Preview)" : ""),
+              value: String(row.language_id),
+              description: row.preview_in_voicely
+                ? "Preview in Voicely; model-specific availability applies"
+                : "Enabled selection; model-specific availability applies",
+            })),
         };
       },
       async getApiModels(
@@ -275,6 +328,36 @@ export class VoicelyV2 implements INodeType {
             rows = modelRows(
               (await request(this, "/v2/models", { timeout })).body,
               checkedScope,
+            );
+          const simplify = Boolean(
+            executionOption(this, index, "simplify", true),
+          );
+          for (const row of limit === undefined ? rows : rows.slice(0, limit))
+            output.push({
+              json: simplify ? compactModel(row) : row,
+              pairedItem: { item: index },
+            });
+          continue;
+        }
+        if (resource === "language" && operation === "getAll") {
+          const model = languageCatalogModel(
+              this.getNodeParameter("languageModel", index, ""),
+            ),
+            all = Boolean(this.getNodeParameter("returnAll", index, false)),
+            limit = all
+              ? undefined
+              : positiveInteger(this.getNodeParameter("limit", index, 50)),
+            rows = languageRows(
+              (
+                await request(
+                  this,
+                  "/v2/tts/languages?model_id=" + encodeURIComponent(model),
+                  {
+                    timeout,
+                  },
+                )
+              ).body,
+              model,
             );
           for (const row of limit === undefined ? rows : rows.slice(0, limit))
             output.push({ json: row, pairedItem: { item: index } });
@@ -445,10 +528,7 @@ export class VoicelyV2 implements INodeType {
         ) {
           const selected = speechModel(parameters),
             model = selected.id,
-            language =
-              parameters.languageCode === undefined
-                ? undefined
-                : String(parameters.languageCode);
+            language = speechLanguage(parameters);
           if (selected.contract && operation !== "textToSpeech")
             selectionIssue(
               "API Model is for Text to Speech. Select the operation's model instead.",
@@ -528,10 +608,7 @@ export class VoicelyV2 implements INodeType {
               format: format!,
               model: speechModel(parameters).id ?? "",
               modelContract: speechModel(parameters).contract,
-              language:
-                parameters.languageCode === undefined
-                  ? ""
-                  : String(parameters.languageCode),
+              language: speechLanguage(parameters) ?? "",
               timeout,
               ...(selectedVoiceSettings === undefined
                 ? {}

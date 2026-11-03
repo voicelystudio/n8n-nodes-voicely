@@ -31,7 +31,9 @@
     "dist/credentials",
     "dist/nodes",
     "migration",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "MODEL-LANGUAGE-VOICE-UAT.md",
+    "examples/studio-v2-model-language-voice-discovery.json"
   ],
   "publishConfig": {
     "access": "public"

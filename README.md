@@ -116,3 +116,7 @@ A credential-free [Agent catalog example](examples/studio-v2-agent-catalog.json)
 Run `npm ci --ignore-scripts`, `npm run lint` and `npm test` to build and validate the connector with the n8n node CLI. The package has no external runtime dependencies. Release publishing uses the repository's GitHub Actions workflow with provenance and an owner-reviewed npm publication stage.
 
 This connector is MIT licensed; see [LICENSE.md](LICENSE.md). Hosted Voicely services and separately deployed runtime components retain their own terms and applicable licenses.
+
+## Model, language and voice discovery
+
+Use dependent selectors within Generate Speech; separate discovery nodes are optional. See [Model → Language → Voice staging guide](MODEL-LANGUAGE-VOICE-UAT.md) for canonical versus saved legacy selections, compact catalog output and streaming limitations.

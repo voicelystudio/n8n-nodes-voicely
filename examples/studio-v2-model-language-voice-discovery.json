@@ -1,0 +1,118 @@
+{
+  "name": "Voicely Studio v2 - selected model language voice discovery",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "model",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 1
+      },
+      "id": "models",
+      "name": "Get Models",
+      "type": "@voicelystudio/n8n-nodes-voicely.voicely",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "language",
+        "operation": "getAll",
+        "languageModel": {
+          "mode": "id",
+          "value": "={{ $json.model_id }}"
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "id": "languages",
+      "name": "Get Languages",
+      "type": "@voicelystudio/n8n-nodes-voicely.voicely",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "voice",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 1,
+        "catalogOptions": {
+          "speechOperation": "textToSpeech",
+          "apiModel": {
+            "mode": "id",
+            "value": "={{ $('Get Models').item.json.model_id }}"
+          },
+          "language": {
+            "mode": "id",
+            "value": "={{ $json.language_id }}"
+          }
+        }
+      },
+      "id": "voices",
+      "name": "Get Voices",
+      "type": "@voicelystudio/n8n-nodes-voicely.voicely",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Models",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Models": {
+      "main": [
+        [
+          {
+            "node": "Get Languages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Languages": {
+      "main": [
+        [
+          {
+            "node": "Get Voices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
