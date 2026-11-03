@@ -1,0 +1,104 @@
+[
+  {
+    "repo": "node",
+    "path": "CHANGELOG.md",
+    "beforeSHA256": "51b0c7b586c6e0724099d25cb5ca16114ad53b179dbd097c31d60c317fdd1887",
+    "afterSHA256": "899f26b009638d118dfde2f330dad8299abfb7636db32b9544789c121e8e0ccf"
+  },
+  {
+    "repo": "node",
+    "path": "CUSTOM-STYLE-UAT.md",
+    "beforeSHA256": null,
+    "afterSHA256": "7afc61f5a2f3b590d2a6961824d20d24041857d709b3510b2021fc02cbfaf7a9"
+  },
+  {
+    "repo": "node",
+    "path": "MODEL-LANGUAGE-VOICE-UAT.md",
+    "beforeSHA256": "4c3f61b4e470699386b70eb58528a77c98c2d041bca89d0759013d66fe67e854",
+    "afterSHA256": "9cf344be7d0fc2946da0c3dc63d285b788034e35e577ab8505bf25844a3eef18"
+  },
+  {
+    "repo": "node",
+    "path": "README.md",
+    "beforeSHA256": "df382506f6a34dc299d9caefde9283e314d844a9d900597b5ae5ebf26ebf800f",
+    "afterSHA256": "74ec50d70af1164fca04ec5cf59de3d21a26bf360e8d9e32e49c491a6c766bcb"
+  },
+  {
+    "repo": "node",
+    "path": "UAT-GUIDE.md",
+    "beforeSHA256": "a6b688488b5e379cc23fd6648bd74e92e9797f44efbb17d8977e9555f30ca631",
+    "afterSHA256": "0353ae95728d446abfaa6dce3ae086becd3b7ecab089172926b1bb34e79253e8"
+  },
+  {
+    "repo": "node",
+    "path": "nodes/Voicely/v2/VoicelyV2.node.ts",
+    "beforeSHA256": "4886004b5886759099a5e746b4f40b8b51646dba3ec8df0a1f0170fbb5e8664b",
+    "afterSHA256": "40c5dfc25898718f39f886422113f5f0bac7122dfd1fd4f458d19784508d590e"
+  },
+  {
+    "repo": "node",
+    "path": "nodes/Voicely/v2/discovery.ts",
+    "beforeSHA256": "b5b01570c6b04d5caf3862c68f78804def369195d0cacd8cf4373748b682476d",
+    "afterSHA256": "a12c8894159b9dd8edfcfcc460035ad26088dd961f8ee59de8f3730308e5563b"
+  },
+  {
+    "repo": "node",
+    "path": "nodes/Voicely/v2/properties.ts",
+    "beforeSHA256": "0abc8f6c0bd922130030a06c9f43b1ba09f9216d2ddfa346c4f682023ccd1e76",
+    "afterSHA256": "949886082e10535223dd8feded736aec6bf560e861776b3d169e8c9b9c618413"
+  },
+  {
+    "repo": "node",
+    "path": "package.json",
+    "beforeSHA256": "d71d1a2f593629629f8b450c9039ce80244a96d20399f7bb93cccb922902844a",
+    "afterSHA256": "a212fd74c49338ae3bb721b96e8c512dc64044672fbbbcc546bc8f570180cf2b"
+  },
+  {
+    "repo": "node",
+    "path": "test/api-model-contract.test.cjs",
+    "beforeSHA256": "7447289862304d2f51738d0f44904dbbac5c0e9219ad4e799c3f94cb5a16182b",
+    "afterSHA256": "dc2b2383ef6f1b2ae4b5205fccb933cd88ed171d815edb9cac816a70b8a56249"
+  },
+  {
+    "repo": "node",
+    "path": "test/custom-style.test.cjs",
+    "beforeSHA256": null,
+    "afterSHA256": "c3d2097ba0b5afff35efef500ec48bff23a478c3df78e1e8f8ed8b2d84949c65"
+  },
+  {
+    "repo": "node",
+    "path": "test/review-corrections.test.cjs",
+    "beforeSHA256": "c99723cc0f01951adec9e23b8795649a6ae2efd5b9f8a99bfc5b0d9915d47423",
+    "afterSHA256": "629a8bc1d206adc22a39d0556a8f390f3b47489226b0daf77c198cd9459fd9a2"
+  },
+  {
+    "repo": "suite",
+    "path": "voicely-n8n-suite-backend/src/apiTtsContract.mjs",
+    "beforeSHA256": "62ebbbfe615b094524c89b630583de3c43b84d99828c6e78d5ffd0c3b9cec23f",
+    "afterSHA256": "7753a31a2056a9a1aeded4be5a37f5ef48830ab9153cc9a4dc34be433d6d48a9"
+  },
+  {
+    "repo": "suite",
+    "path": "voicely-n8n-suite-backend/src/service.mjs",
+    "beforeSHA256": "8b3729a1d1604cda009d1b98934471f5868a06772c00fbae93a6f2ca54ea28e4",
+    "afterSHA256": "78a1c222092107685a7bedc5bc64be4493ab8f1b91955f43bde3c511c3c2bae1"
+  },
+  {
+    "repo": "suite",
+    "path": "voicely-n8n-suite-backend/test/apiTtsContract.test.mjs",
+    "beforeSHA256": "79443a9929b5e7e7d40103070e20aa0188189ace2ad03493587c905ff3f88956",
+    "afterSHA256": "a257047592be837f43609d997086ab523db0335225cf5888e5bd497926d76837"
+  },
+  {
+    "repo": "suite",
+    "path": "voicely-n8n-suite-backend/test/customStyle.test.mjs",
+    "beforeSHA256": null,
+    "afterSHA256": "6913e35c3b306fd05c1659488bef3cee33f00046cd3808a7851fe04f32395e9b"
+  },
+  {
+    "repo": "suite",
+    "path": "voicely-n8n-suite-backend/test/customStyleWire.test.mts",
+    "beforeSHA256": null,
+    "afterSHA256": "445e77df058f9aa670e5cd6b9e18ceb19a1f9569c05c897cc7ab791bdb41f37a"
+  }
+]
