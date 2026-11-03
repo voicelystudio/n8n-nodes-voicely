@@ -1,0 +1,3309 @@
+[
+  {
+    "displayName": "Voicely Studio",
+    "group": [
+      "transform"
+    ],
+    "subtitle": "={{$parameter[\"operation\"] + \": \" + $parameter[\"resource\"]}}",
+    "version": 2,
+    "description": "Speech, voices, agents and call automation with Voicely",
+    "defaults": {
+      "name": "Voicely Studio"
+    },
+    "inputs": [
+      "main"
+    ],
+    "outputs": [
+      "main"
+    ],
+    "usableAsTool": true,
+    "credentials": [
+      {
+        "name": "voicelySuiteApi",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model",
+              "speech",
+              "voice"
+            ]
+          }
+        }
+      },
+      {
+        "name": "voicelyAutomationApi",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "agent",
+              "call",
+              "delivery",
+              "subscription",
+              "tool"
+            ]
+          }
+        }
+      }
+    ],
+    "properties": [
+      {
+        "displayName": "Resource",
+        "name": "resource",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "speech",
+        "options": [
+          {
+            "name": "Agent",
+            "value": "agent"
+          },
+          {
+            "name": "Call",
+            "value": "call"
+          },
+          {
+            "name": "Delivery",
+            "value": "delivery"
+          },
+          {
+            "name": "Model",
+            "value": "model"
+          },
+          {
+            "name": "Speech",
+            "value": "speech"
+          },
+          {
+            "name": "Subscription",
+            "value": "subscription"
+          },
+          {
+            "name": "Tool",
+            "value": "tool"
+          },
+          {
+            "name": "Voice",
+            "value": "voice"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "textToSpeech",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Text to Speech",
+            "value": "textToSpeech",
+            "action": "Generate speech"
+          },
+          {
+            "name": "Speech to Text",
+            "value": "speechToText",
+            "action": "Transcribe audio"
+          },
+          {
+            "name": "Speech to Speech",
+            "value": "speechToSpeech",
+            "action": "Convert speech"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "voice"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get",
+            "value": "get",
+            "action": "Get voice"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get many voices"
+          },
+          {
+            "name": "Create Clone",
+            "value": "createClone",
+            "action": "Create owned voice"
+          },
+          {
+            "name": "Delete",
+            "value": "delete",
+            "action": "Delete owned voice"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Model and Speech Options",
+        "name": "additionalOptions",
+        "type": "collection",
+        "default": {},
+        "placeholder": "Choose Model or Add Option",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "options": [
+          {
+            "displayName": "Custom Style Strength",
+            "name": "styleStrength",
+            "type": "string",
+            "default": "",
+            "description": "Custom model only: enter a number from 0 to 1 or use an expression. Leave empty for the service default. Fixed presets refuse this override.",
+            "displayOptions": {
+              "show": {
+                "/operation": [
+                  "speechToSpeech"
+                ]
+              }
+            }
+          },
+          {
+            "displayName": "Diarize",
+            "name": "diarize",
+            "type": "boolean",
+            "default": true,
+            "displayOptions": {
+              "show": {
+                "/operation": [
+                  "speechToText"
+                ]
+              }
+            }
+          },
+          {
+            "displayName": "Language Code",
+            "name": "languageCode",
+            "type": "string",
+            "default": ""
+          },
+          {
+            "displayName": "Model",
+            "name": "model",
+            "description": "Choose a model before selecting a voice. After changing the model, reselect a compatible voice. Blank keeps the service default; presets and Custom choices come from the service.",
+            "type": "resourceLocator",
+            "typeOptions": {
+              "loadOptionsDependsOn": [
+                "operation"
+              ]
+            },
+            "default": {
+              "mode": "list",
+              "value": ""
+            },
+            "modes": [
+              {
+                "displayName": "From List",
+                "name": "list",
+                "type": "list",
+                "typeOptions": {
+                  "searchListMethod": "getModels",
+                  "searchable": true
+                }
+              },
+              {
+                "displayName": "ID",
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "displayName": "Number of Speakers",
+            "name": "numberOfSpeakers",
+            "type": "number",
+            "default": 2,
+            "displayOptions": {
+              "show": {
+                "/operation": [
+                  "speechToText"
+                ]
+              }
+            },
+            "description": "Expected count, provided explicitly only when this option is selected"
+          },
+          {
+            "displayName": "Output Format",
+            "name": "outputFormat",
+            "type": "options",
+            "default": "mp3_44100_128",
+            "options": [
+              {
+                "name": "mp3 22050 32",
+                "value": "mp3_22050_32"
+              },
+              {
+                "name": "mp3 44100 32",
+                "value": "mp3_44100_32"
+              },
+              {
+                "name": "mp3 44100 64",
+                "value": "mp3_44100_64"
+              },
+              {
+                "name": "mp3 44100 96",
+                "value": "mp3_44100_96"
+              },
+              {
+                "name": "mp3 44100 128",
+                "value": "mp3_44100_128"
+              },
+              {
+                "name": "mp3 44100 192",
+                "value": "mp3_44100_192"
+              },
+              {
+                "name": "pcm 8000",
+                "value": "pcm_8000"
+              },
+              {
+                "name": "pcm 16000",
+                "value": "pcm_16000"
+              },
+              {
+                "name": "pcm 22050",
+                "value": "pcm_22050"
+              },
+              {
+                "name": "pcm 24000",
+                "value": "pcm_24000"
+              },
+              {
+                "name": "pcm 44100",
+                "value": "pcm_44100"
+              },
+              {
+                "name": "pcm 48000",
+                "value": "pcm_48000"
+              },
+              {
+                "name": "ulaw 8000",
+                "value": "ulaw_8000"
+              },
+              {
+                "name": "alaw 8000",
+                "value": "alaw_8000"
+              },
+              {
+                "name": "opus 48000 32",
+                "value": "opus_48000_32"
+              },
+              {
+                "name": "opus 48000 64",
+                "value": "opus_48000_64"
+              },
+              {
+                "name": "opus 48000 96",
+                "value": "opus_48000_96"
+              },
+              {
+                "name": "opus 48000 128",
+                "value": "opus_48000_128"
+              },
+              {
+                "name": "opus 48000 192",
+                "value": "opus_48000_192"
+              }
+            ],
+            "displayOptions": {
+              "hide": {
+                "/operation": [
+                  "speechToText"
+                ]
+              }
+            }
+          },
+          {
+            "displayName": "Voice Settings",
+            "name": "voiceSettings",
+            "type": "json",
+            "default": "{}",
+            "description": "Voicely voice controls: stability, similarity_boost, style, use_speaker_boost and speed",
+            "displayOptions": {
+              "hide": {
+                "/operation": [
+                  "speechToText"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get many models"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Catalog Options",
+        "name": "catalogOptions",
+        "type": "collection",
+        "default": {},
+        "placeholder": "Add Filter",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model",
+              "voice"
+            ],
+            "operation": [
+              "getAll"
+            ]
+          }
+        },
+        "options": [
+          {
+            "displayName": "Model",
+            "name": "model",
+            "type": "resourceLocator",
+            "default": {
+              "mode": "list",
+              "value": ""
+            },
+            "description": "Choose a speech operation first, then a compatible model. Leave empty to use the service default for that operation.",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "voice"
+                ],
+                "/catalogOptions.speechOperation": [
+                  "textToSpeech",
+                  "speechToSpeech"
+                ]
+              }
+            },
+            "typeOptions": {
+              "loadOptionsDependsOn": [
+                "catalogOptions.speechOperation",
+                "resource"
+              ]
+            },
+            "modes": [
+              {
+                "displayName": "From List",
+                "name": "list",
+                "type": "list",
+                "typeOptions": {
+                  "searchListMethod": "getModels",
+                  "searchable": true
+                }
+              },
+              {
+                "displayName": "ID",
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "displayName": "Speech Operation",
+            "name": "speechOperation",
+            "type": "options",
+            "default": "all",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "model"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "All (Unfiltered Catalog)",
+                "value": "all"
+              },
+              {
+                "name": "Text to Speech",
+                "value": "textToSpeech"
+              },
+              {
+                "name": "Speech to Speech",
+                "value": "speechToSpeech"
+              },
+              {
+                "name": "Speech to Text",
+                "value": "speechToText"
+              }
+            ],
+            "description": "Filter by intended use. Speech to Text has no voice selection. An unfiltered voice list does not imply compatibility with every model."
+          },
+          {
+            "displayName": "Speech Operation",
+            "name": "speechOperation",
+            "type": "options",
+            "default": "all",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "voice"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "All (Unfiltered Catalog)",
+                "value": "all"
+              },
+              {
+                "name": "Text to Speech",
+                "value": "textToSpeech"
+              },
+              {
+                "name": "Speech to Speech",
+                "value": "speechToSpeech"
+              }
+            ],
+            "description": "Filter by intended use. Speech to Text has no voice selection. An unfiltered voice list does not imply compatibility with every model."
+          }
+        ]
+      },
+      {
+        "displayName": "Voice",
+        "name": "voice",
+        "type": "resourceLocator",
+        "typeOptions": {
+          "loadOptionsDependsOn": [
+            "resource",
+            "operation",
+            "additionalOptions.model",
+            "catalogOptions.speechOperation",
+            "catalogOptions.model"
+          ]
+        },
+        "default": {
+          "mode": "list",
+          "value": ""
+        },
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech",
+              "voice"
+            ],
+            "operation": [
+              "textToSpeech",
+              "speechToSpeech",
+              "get",
+              "delete"
+            ]
+          }
+        },
+        "modes": [
+          {
+            "displayName": "From List",
+            "name": "list",
+            "type": "list",
+            "typeOptions": {
+              "searchListMethod": "getVoices",
+              "searchable": true
+            }
+          },
+          {
+            "displayName": "ID",
+            "name": "id",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "displayName": "Text",
+        "name": "text",
+        "type": "string",
+        "typeOptions": {
+          "rows": 4
+        },
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "textToSpeech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Input Binary Field",
+        "name": "file",
+        "type": "string",
+        "default": "data",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "speechToText",
+              "speechToSpeech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Reference Binary Fields",
+        "name": "audioFiles",
+        "type": "string",
+        "default": "data",
+        "required": true,
+        "description": "Comma-separated binary field names containing recordings you have permission to use",
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "createClone"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Consent Binary Field",
+        "name": "consentFile",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "description": "The separate genuine consent recording required for voice creation",
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "createClone"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Name",
+        "name": "name",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "createClone"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Additional Fields",
+        "name": "additionalFields",
+        "type": "collection",
+        "default": {},
+        "placeholder": "Add Field",
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "createClone"
+            ]
+          }
+        },
+        "options": [
+          {
+            "displayName": "Description",
+            "name": "description",
+            "type": "string",
+            "default": ""
+          },
+          {
+            "displayName": "Labels",
+            "name": "labels",
+            "type": "json",
+            "default": "{}"
+          }
+        ]
+      },
+      {
+        "displayName": "Return All",
+        "name": "returnAll",
+        "type": "boolean",
+        "description": "Whether to return all results or only up to a given limit",
+        "default": false,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model",
+              "voice"
+            ],
+            "operation": [
+              "getAll"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Limit",
+        "name": "limit",
+        "type": "number",
+        "typeOptions": {
+          "minValue": 1
+        },
+        "default": 50,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model",
+              "voice"
+            ],
+            "operation": [
+              "getAll"
+            ],
+            "returnAll": [
+              false
+            ]
+          }
+        },
+        "description": "Max number of results to return"
+      },
+      {
+        "displayName": "Output Binary Field",
+        "name": "outputBinaryField",
+        "type": "string",
+        "default": "audio",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "textToSpeech",
+              "speechToSpeech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "agent"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get agents"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "get",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "call"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get",
+            "value": "get",
+            "action": "Get a finalized call"
+          },
+          {
+            "name": "Revoke Data Sharing",
+            "value": "revokeExports",
+            "action": "Revoke call data sharing"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "delivery"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get deliveries"
+          },
+          {
+            "name": "Redeliver",
+            "value": "redeliver",
+            "action": "Redeliver the same event"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get tools"
+          },
+          {
+            "name": "Register Version",
+            "value": "register",
+            "action": "Register a tool version"
+          },
+          {
+            "name": "Disable",
+            "value": "disable",
+            "action": "Disable a tool"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "test",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "subscription"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Send Setup Event",
+            "value": "test",
+            "action": "Send a synthetic setup event"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Agent ID",
+        "name": "agentId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "getAll",
+              "register"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Call ID",
+        "name": "callId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "call"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Delivery ID",
+        "name": "deliveryId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "delivery"
+            ],
+            "operation": [
+              "redeliver"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Tool ID",
+        "name": "toolId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "disable"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Subscription ID",
+        "name": "subscriptionId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "subscription"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Return All",
+        "name": "returnAll",
+        "type": "boolean",
+        "description": "Whether to return all results or only up to a given limit",
+        "default": false,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "agent",
+              "delivery",
+              "tool"
+            ],
+            "operation": [
+              "getAll"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Limit",
+        "name": "limit",
+        "type": "number",
+        "typeOptions": {
+          "minValue": 1
+        },
+        "default": 50,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "agent",
+              "delivery",
+              "tool"
+            ],
+            "operation": [
+              "getAll"
+            ],
+            "returnAll": [
+              false
+            ]
+          }
+        },
+        "description": "Max number of results to return"
+      },
+      {
+        "displayName": "Tool Name",
+        "name": "toolName",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        },
+        "description": "A stable function name, using letters, digits and underscores"
+      },
+      {
+        "displayName": "Description",
+        "name": "description",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        },
+        "description": "Explain when the agent should use this tool"
+      },
+      {
+        "displayName": "Workflow Webhook URL",
+        "name": "destination",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        },
+        "description": "Production HTTPS URL of your business workflow. Return a typed completed result after business work finishes."
+      },
+      {
+        "displayName": "Input Schema",
+        "name": "inputSchema",
+        "type": "json",
+        "default": "{\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false}",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Result Schema",
+        "name": "outputSchema",
+        "type": "json",
+        "default": "{\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false}",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Options",
+        "name": "options",
+        "type": "collection",
+        "default": {},
+        "placeholder": "Add Option",
+        "options": [
+          {
+            "displayName": "Effect",
+            "name": "effect",
+            "type": "options",
+            "default": "read",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "tool"
+                ],
+                "/operation": [
+                  "register"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "Read",
+                "value": "read"
+              },
+              {
+                "name": "Write",
+                "value": "write"
+              },
+              {
+                "name": "Escalate or Notify",
+                "value": "escalate"
+              }
+            ],
+            "description": "Writes and escalation require caller confirmation before dispatch"
+          },
+          {
+            "displayName": "Include Shared Data",
+            "name": "includeData",
+            "type": "multiOptions",
+            "default": [],
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "call"
+                ],
+                "/operation": [
+                  "get"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "Callback Details",
+                "value": "lead"
+              },
+              {
+                "name": "Transcript",
+                "value": "transcript"
+              },
+              {
+                "name": "Conversation Context",
+                "value": "context"
+              }
+            ],
+            "description": "Requires explicit caller sharing permission and the matching key scopes. Expired or withdrawn details are unavailable."
+          },
+          {
+            "displayName": "Operation Identity",
+            "name": "operationIdentity",
+            "type": "string",
+            "default": "",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "speech",
+                  "voice"
+                ]
+              }
+            },
+            "description": "Use a stable business identity to safely check retries across workflow runs. Blank uses this execution, node and input item."
+          },
+          {
+            "displayName": "Purpose",
+            "name": "purpose",
+            "type": "options",
+            "default": "business",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "tool"
+                ],
+                "/operation": [
+                  "register"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "Business Action",
+                "value": "business"
+              },
+              {
+                "name": "Verify Caller",
+                "value": "verify_caller"
+              }
+            ],
+            "description": "A verification tool must be read-only and must not itself require a verified caller. It returns verified and subject after your business system checks identity."
+          },
+          {
+            "displayName": "Request Timeout (Ms)",
+            "name": "requestTimeoutMs",
+            "type": "number",
+            "default": 0,
+            "description": "Zero leaves the request without a client timeout. Server policy still applies."
+          },
+          {
+            "displayName": "Require Verified Caller",
+            "name": "verifiedCaller",
+            "type": "boolean",
+            "default": true,
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "tool"
+                ],
+                "/operation": [
+                  "register"
+                ]
+              }
+            },
+            "description": "Whether to require verified caller identity before accessing sensitive information"
+          },
+          {
+            "displayName": "Simplify",
+            "name": "simplify",
+            "type": "boolean",
+            "default": true,
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "voice"
+                ],
+                "/operation": [
+                  "get",
+                  "getAll"
+                ]
+              }
+            }
+          },
+          {
+            "displayName": "Speech Transport",
+            "name": "speechTransport",
+            "type": "options",
+            "default": "http",
+            "options": [
+              {
+                "name": "HTTP",
+                "value": "http"
+              },
+              {
+                "name": "WebSocket",
+                "value": "websocket"
+              }
+            ],
+            "description": "Use the same independent Service URL. WebSocket needs a supported server-side n8n host and has no replay or automatic HTTP fallback.",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "speech"
+                ],
+                "/operation": [
+                  "textToSpeech"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "iconUrl": {
+      "light": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/Voicely/voicely.svg",
+      "dark": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/Voicely/voicely.svg"
+    },
+    "communityNodePackageVersion": "0.2.1",
+    "codex": {
+      "categories": [
+        "Communication"
+      ],
+      "resources": {
+        "primaryDocumentation": [
+          {
+            "url": "https://tryvoicely.com/developers/api"
+          }
+        ],
+        "credentialDocumentation": [
+          {
+            "url": "https://github.com/voicelystudio/n8n-nodes-voicely#credentials"
+          }
+        ]
+      }
+    },
+    "name": "@voicelystudio/n8n-nodes-voicely.voicely"
+  },
+  {
+    "usableAsTool": true,
+    "displayName": "Voicely",
+    "group": [
+      "transform"
+    ],
+    "version": 1,
+    "subtitle": "={{$parameter[\"operation\"] + \": \" + $parameter[\"resource\"]}}",
+    "description": "Generate speech and discover Voicely voices",
+    "defaults": {
+      "name": "Voicely"
+    },
+    "inputs": [
+      "main"
+    ],
+    "outputs": [
+      "main"
+    ],
+    "credentials": [
+      {
+        "name": "voicelyApi",
+        "required": true
+      }
+    ],
+    "properties": [
+      {
+        "displayName": "Resource",
+        "name": "resource",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "speech",
+        "options": [
+          {
+            "name": "Speech",
+            "value": "speech"
+          },
+          {
+            "name": "Voice",
+            "value": "voice"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "generate",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Generate",
+            "value": "generate",
+            "action": "Generate speech"
+          },
+          {
+            "name": "Generate via WebSocket",
+            "value": "generateWebSocket",
+            "action": "Generate speech via websocket",
+            "description": "Receive WebSocket audio and return one complete binary file"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getMany",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "voice"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getMany",
+            "action": "Get many voices"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Text",
+        "name": "text",
+        "type": "string",
+        "typeOptions": {
+          "rows": 4
+        },
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Voice Name or ID",
+        "name": "voiceId",
+        "type": "options",
+        "typeOptions": {
+          "loadOptionsMethod": "getVoices"
+        },
+        "default": "",
+        "required": true,
+        "description": "Choose from the list, or specify an ID using an <a href=\"https://docs.n8n.io/code/expressions/\">expression</a>",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Model Name or ID",
+        "name": "modelId",
+        "type": "options",
+        "typeOptions": {
+          "loadOptionsMethod": "getModels"
+        },
+        "default": "",
+        "description": "Choose from the list, or specify an ID using an <a href=\"https://docs.n8n.io/code/expressions/\">expression</a>",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Language Code",
+        "name": "languageCode",
+        "type": "string",
+        "default": "",
+        "description": "ISO language or supported locale. Leave empty for API detection. Roman Urdu requires ur.",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Output Format",
+        "name": "outputFormat",
+        "type": "options",
+        "default": "mp3_44100_128",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "MP3",
+            "value": "mp3_44100_128"
+          },
+          {
+            "name": "PCM 16 kHz (Raw)",
+            "value": "pcm_16000"
+          },
+          {
+            "name": "PCM 24 kHz (Raw)",
+            "value": "pcm_24000"
+          },
+          {
+            "name": "Mu-Law 8 kHz (Raw)",
+            "value": "ulaw_8000"
+          }
+        ]
+      },
+      {
+        "displayName": "Put Output in Field",
+        "name": "binaryProperty",
+        "type": "string",
+        "default": "audio",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "description": "The binary field for the generated audio"
+      },
+      {
+        "displayName": "Item Concurrency",
+        "name": "itemConcurrency",
+        "type": "number",
+        "default": 1,
+        "description": "Simultaneous item requests in this execution. Configurable without an upper ceiling; the API remains the capacity authority."
+      },
+      {
+        "displayName": "Options",
+        "name": "options",
+        "type": "collection",
+        "placeholder": "Add Option",
+        "default": {},
+        "options": [
+          {
+            "displayName": "Idempotency Key",
+            "name": "idempotencyKey",
+            "type": "string",
+            "default": "",
+            "description": "HTTP Generate only. WebSocket does not support idempotent replay. Stable business job key for HTTP replay across workflow reruns."
+          },
+          {
+            "displayName": "Request Timeout (Ms)",
+            "name": "requestTimeoutMs",
+            "type": "number",
+            "default": 180000,
+            "description": "HTTP request or complete WebSocket session timeout in milliseconds. Zero disables it. No coded upper ceiling."
+          }
+        ]
+      }
+    ],
+    "iconUrl": {
+      "light": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/Voicely/voicely.svg",
+      "dark": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/Voicely/voicely.svg"
+    },
+    "communityNodePackageVersion": "0.2.1",
+    "__loadOptionsMethods": [
+      "getVoices",
+      "getModels"
+    ],
+    "codex": {
+      "categories": [
+        "Communication"
+      ],
+      "resources": {
+        "primaryDocumentation": [
+          {
+            "url": "https://tryvoicely.com/developers/api"
+          }
+        ],
+        "credentialDocumentation": [
+          {
+            "url": "https://github.com/voicelystudio/n8n-nodes-voicely#credentials"
+          }
+        ]
+      }
+    },
+    "name": "@voicelystudio/n8n-nodes-voicely.voicely"
+  },
+  {
+    "displayName": "Voicely Agents Trigger",
+    "group": [
+      "trigger"
+    ],
+    "version": 1,
+    "subtitle": "Call events",
+    "description": "Receive signed Voicely call and setup events",
+    "defaults": {
+      "name": "Voicely Agents Trigger"
+    },
+    "inputs": [],
+    "outputs": [
+      "main"
+    ],
+    "credentials": [
+      {
+        "name": "voicelyAutomationApi",
+        "required": true
+      }
+    ],
+    "webhooks": [
+      {
+        "name": "default",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "path": "events",
+        "rawBody": true
+      }
+    ],
+    "properties": [
+      {
+        "displayName": "Agent",
+        "name": "agent",
+        "type": "resourceLocator",
+        "default": {
+          "mode": "list",
+          "value": ""
+        },
+        "required": true,
+        "modes": [
+          {
+            "displayName": "From List",
+            "name": "list",
+            "type": "list",
+            "typeOptions": {
+              "searchListMethod": "agents"
+            }
+          },
+          {
+            "displayName": "By ID",
+            "name": "id",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "displayName": "Options",
+        "name": "options",
+        "type": "collection",
+        "default": {},
+        "placeholder": "Add Option",
+        "options": [
+          {
+            "displayName": "Include Setup Test Events",
+            "name": "includeSynthetic",
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to emit clearly marked synthetic setup events. Templates must keep these separate from business writes."
+          },
+          {
+            "displayName": "Request Timeout (Ms)",
+            "name": "requestTimeoutMs",
+            "type": "number",
+            "default": 0,
+            "description": "Timeout for registration requests. Zero adds no client deadline; the service still applies its configured limits."
+          }
+        ]
+      }
+    ],
+    "codex": {
+      "categories": [
+        "Communication"
+      ],
+      "resources": {
+        "primaryDocumentation": [
+          {
+            "url": "https://tryvoicely.com/integrations/n8n"
+          }
+        ]
+      }
+    },
+    "iconUrl": {
+      "light": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/VoicelyAgentsTrigger/voicely.svg",
+      "dark": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/VoicelyAgentsTrigger/voicely.svg"
+    },
+    "communityNodePackageVersion": "0.2.1",
+    "name": "@voicelystudio/n8n-nodes-voicely.voicelyAgentsTrigger"
+  },
+  {
+    "displayName": "Voicely Studio Tool",
+    "group": [
+      "transform"
+    ],
+    "subtitle": "={{$parameter[\"operation\"] + \": \" + $parameter[\"resource\"]}}",
+    "version": 2,
+    "description": "Speech, voices, agents and call automation with Voicely",
+    "defaults": {
+      "name": "Voicely Studio"
+    },
+    "inputs": [],
+    "outputs": [
+      "ai_tool"
+    ],
+    "credentials": [
+      {
+        "name": "voicelySuiteApi",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model",
+              "speech",
+              "voice"
+            ]
+          }
+        }
+      },
+      {
+        "name": "voicelyAutomationApi",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "agent",
+              "call",
+              "delivery",
+              "subscription",
+              "tool"
+            ]
+          }
+        }
+      }
+    ],
+    "properties": [
+      {
+        "displayName": "Tool Description",
+        "name": "descriptionType",
+        "type": "options",
+        "noDataExpression": true,
+        "options": [
+          {
+            "name": "Set Automatically",
+            "value": "auto",
+            "description": "Automatically set based on resource and operation"
+          },
+          {
+            "name": "Set Manually",
+            "value": "manual",
+            "description": "Manually set the description"
+          }
+        ],
+        "default": "auto"
+      },
+      {
+        "displayName": "Description",
+        "name": "toolDescription",
+        "type": "string",
+        "default": "Speech, voices, agents and call automation with Voicely",
+        "required": true,
+        "typeOptions": {
+          "rows": 2
+        },
+        "description": "Explain to the LLM what this tool does, a good, specific description would allow LLMs to produce expected results much more often",
+        "displayOptions": {
+          "show": {
+            "descriptionType": [
+              "manual"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Resource",
+        "name": "resource",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "speech",
+        "options": [
+          {
+            "name": "Agent",
+            "value": "agent"
+          },
+          {
+            "name": "Call",
+            "value": "call"
+          },
+          {
+            "name": "Delivery",
+            "value": "delivery"
+          },
+          {
+            "name": "Model",
+            "value": "model"
+          },
+          {
+            "name": "Speech",
+            "value": "speech"
+          },
+          {
+            "name": "Subscription",
+            "value": "subscription"
+          },
+          {
+            "name": "Tool",
+            "value": "tool"
+          },
+          {
+            "name": "Voice",
+            "value": "voice"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "textToSpeech",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Text to Speech",
+            "value": "textToSpeech",
+            "action": "Generate speech"
+          },
+          {
+            "name": "Speech to Text",
+            "value": "speechToText",
+            "action": "Transcribe audio"
+          },
+          {
+            "name": "Speech to Speech",
+            "value": "speechToSpeech",
+            "action": "Convert speech"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "voice"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get",
+            "value": "get",
+            "action": "Get voice"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get many voices"
+          },
+          {
+            "name": "Create Clone",
+            "value": "createClone",
+            "action": "Create owned voice"
+          },
+          {
+            "name": "Delete",
+            "value": "delete",
+            "action": "Delete owned voice"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Model and Speech Options",
+        "name": "additionalOptions",
+        "type": "collection",
+        "default": {},
+        "placeholder": "Choose Model or Add Option",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "options": [
+          {
+            "displayName": "Custom Style Strength",
+            "name": "styleStrength",
+            "type": "string",
+            "default": "",
+            "description": "Custom model only: enter a number from 0 to 1 or use an expression. Leave empty for the service default. Fixed presets refuse this override.",
+            "displayOptions": {
+              "show": {
+                "/operation": [
+                  "speechToSpeech"
+                ]
+              }
+            }
+          },
+          {
+            "displayName": "Diarize",
+            "name": "diarize",
+            "type": "boolean",
+            "default": true,
+            "displayOptions": {
+              "show": {
+                "/operation": [
+                  "speechToText"
+                ]
+              }
+            }
+          },
+          {
+            "displayName": "Language Code",
+            "name": "languageCode",
+            "type": "string",
+            "default": ""
+          },
+          {
+            "displayName": "Model",
+            "name": "model",
+            "description": "Choose a model before selecting a voice. After changing the model, reselect a compatible voice. Blank keeps the service default; presets and Custom choices come from the service.",
+            "type": "resourceLocator",
+            "typeOptions": {
+              "loadOptionsDependsOn": [
+                "operation"
+              ]
+            },
+            "default": {
+              "mode": "list",
+              "value": ""
+            },
+            "modes": [
+              {
+                "displayName": "From List",
+                "name": "list",
+                "type": "list",
+                "typeOptions": {
+                  "searchListMethod": "getModels",
+                  "searchable": true
+                }
+              },
+              {
+                "displayName": "ID",
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "displayName": "Number of Speakers",
+            "name": "numberOfSpeakers",
+            "type": "number",
+            "default": 2,
+            "displayOptions": {
+              "show": {
+                "/operation": [
+                  "speechToText"
+                ]
+              }
+            },
+            "description": "Expected count, provided explicitly only when this option is selected"
+          },
+          {
+            "displayName": "Output Format",
+            "name": "outputFormat",
+            "type": "options",
+            "default": "mp3_44100_128",
+            "options": [
+              {
+                "name": "mp3 22050 32",
+                "value": "mp3_22050_32"
+              },
+              {
+                "name": "mp3 44100 32",
+                "value": "mp3_44100_32"
+              },
+              {
+                "name": "mp3 44100 64",
+                "value": "mp3_44100_64"
+              },
+              {
+                "name": "mp3 44100 96",
+                "value": "mp3_44100_96"
+              },
+              {
+                "name": "mp3 44100 128",
+                "value": "mp3_44100_128"
+              },
+              {
+                "name": "mp3 44100 192",
+                "value": "mp3_44100_192"
+              },
+              {
+                "name": "pcm 8000",
+                "value": "pcm_8000"
+              },
+              {
+                "name": "pcm 16000",
+                "value": "pcm_16000"
+              },
+              {
+                "name": "pcm 22050",
+                "value": "pcm_22050"
+              },
+              {
+                "name": "pcm 24000",
+                "value": "pcm_24000"
+              },
+              {
+                "name": "pcm 44100",
+                "value": "pcm_44100"
+              },
+              {
+                "name": "pcm 48000",
+                "value": "pcm_48000"
+              },
+              {
+                "name": "ulaw 8000",
+                "value": "ulaw_8000"
+              },
+              {
+                "name": "alaw 8000",
+                "value": "alaw_8000"
+              },
+              {
+                "name": "opus 48000 32",
+                "value": "opus_48000_32"
+              },
+              {
+                "name": "opus 48000 64",
+                "value": "opus_48000_64"
+              },
+              {
+                "name": "opus 48000 96",
+                "value": "opus_48000_96"
+              },
+              {
+                "name": "opus 48000 128",
+                "value": "opus_48000_128"
+              },
+              {
+                "name": "opus 48000 192",
+                "value": "opus_48000_192"
+              }
+            ],
+            "displayOptions": {
+              "hide": {
+                "/operation": [
+                  "speechToText"
+                ]
+              }
+            }
+          },
+          {
+            "displayName": "Voice Settings",
+            "name": "voiceSettings",
+            "type": "json",
+            "default": "{}",
+            "description": "Voicely voice controls: stability, similarity_boost, style, use_speaker_boost and speed",
+            "displayOptions": {
+              "hide": {
+                "/operation": [
+                  "speechToText"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get many models"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Catalog Options",
+        "name": "catalogOptions",
+        "type": "collection",
+        "default": {},
+        "placeholder": "Add Filter",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model",
+              "voice"
+            ],
+            "operation": [
+              "getAll"
+            ]
+          }
+        },
+        "options": [
+          {
+            "displayName": "Model",
+            "name": "model",
+            "type": "resourceLocator",
+            "default": {
+              "mode": "list",
+              "value": ""
+            },
+            "description": "Choose a speech operation first, then a compatible model. Leave empty to use the service default for that operation.",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "voice"
+                ],
+                "/catalogOptions.speechOperation": [
+                  "textToSpeech",
+                  "speechToSpeech"
+                ]
+              }
+            },
+            "typeOptions": {
+              "loadOptionsDependsOn": [
+                "catalogOptions.speechOperation",
+                "resource"
+              ]
+            },
+            "modes": [
+              {
+                "displayName": "From List",
+                "name": "list",
+                "type": "list",
+                "typeOptions": {
+                  "searchListMethod": "getModels",
+                  "searchable": true
+                }
+              },
+              {
+                "displayName": "ID",
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "displayName": "Speech Operation",
+            "name": "speechOperation",
+            "type": "options",
+            "default": "all",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "model"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "All (Unfiltered Catalog)",
+                "value": "all"
+              },
+              {
+                "name": "Text to Speech",
+                "value": "textToSpeech"
+              },
+              {
+                "name": "Speech to Speech",
+                "value": "speechToSpeech"
+              },
+              {
+                "name": "Speech to Text",
+                "value": "speechToText"
+              }
+            ],
+            "description": "Filter by intended use. Speech to Text has no voice selection. An unfiltered voice list does not imply compatibility with every model."
+          },
+          {
+            "displayName": "Speech Operation",
+            "name": "speechOperation",
+            "type": "options",
+            "default": "all",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "voice"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "All (Unfiltered Catalog)",
+                "value": "all"
+              },
+              {
+                "name": "Text to Speech",
+                "value": "textToSpeech"
+              },
+              {
+                "name": "Speech to Speech",
+                "value": "speechToSpeech"
+              }
+            ],
+            "description": "Filter by intended use. Speech to Text has no voice selection. An unfiltered voice list does not imply compatibility with every model."
+          }
+        ]
+      },
+      {
+        "displayName": "Voice",
+        "name": "voice",
+        "type": "resourceLocator",
+        "typeOptions": {
+          "loadOptionsDependsOn": [
+            "resource",
+            "operation",
+            "additionalOptions.model",
+            "catalogOptions.speechOperation",
+            "catalogOptions.model"
+          ]
+        },
+        "default": {
+          "mode": "list",
+          "value": ""
+        },
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech",
+              "voice"
+            ],
+            "operation": [
+              "textToSpeech",
+              "speechToSpeech",
+              "get",
+              "delete"
+            ]
+          }
+        },
+        "modes": [
+          {
+            "displayName": "From List",
+            "name": "list",
+            "type": "list",
+            "typeOptions": {
+              "searchListMethod": "getVoices",
+              "searchable": true
+            }
+          },
+          {
+            "displayName": "ID",
+            "name": "id",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "displayName": "Text",
+        "name": "text",
+        "type": "string",
+        "typeOptions": {
+          "rows": 4
+        },
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "textToSpeech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Input Binary Field",
+        "name": "file",
+        "type": "string",
+        "default": "data",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "speechToText",
+              "speechToSpeech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Reference Binary Fields",
+        "name": "audioFiles",
+        "type": "string",
+        "default": "data",
+        "required": true,
+        "description": "Comma-separated binary field names containing recordings you have permission to use",
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "createClone"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Consent Binary Field",
+        "name": "consentFile",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "description": "The separate genuine consent recording required for voice creation",
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "createClone"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Name",
+        "name": "name",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "createClone"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Additional Fields",
+        "name": "additionalFields",
+        "type": "collection",
+        "default": {},
+        "placeholder": "Add Field",
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "createClone"
+            ]
+          }
+        },
+        "options": [
+          {
+            "displayName": "Description",
+            "name": "description",
+            "type": "string",
+            "default": ""
+          },
+          {
+            "displayName": "Labels",
+            "name": "labels",
+            "type": "json",
+            "default": "{}"
+          }
+        ]
+      },
+      {
+        "displayName": "Return All",
+        "name": "returnAll",
+        "type": "boolean",
+        "description": "Whether to return all results or only up to a given limit",
+        "default": false,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model",
+              "voice"
+            ],
+            "operation": [
+              "getAll"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Limit",
+        "name": "limit",
+        "type": "number",
+        "typeOptions": {
+          "minValue": 1
+        },
+        "default": 50,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "model",
+              "voice"
+            ],
+            "operation": [
+              "getAll"
+            ],
+            "returnAll": [
+              false
+            ]
+          }
+        },
+        "description": "Max number of results to return"
+      },
+      {
+        "displayName": "Output Binary Field",
+        "name": "outputBinaryField",
+        "type": "string",
+        "default": "audio",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "operation": [
+              "textToSpeech",
+              "speechToSpeech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "agent"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get agents"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "get",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "call"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get",
+            "value": "get",
+            "action": "Get a finalized call"
+          },
+          {
+            "name": "Revoke Data Sharing",
+            "value": "revokeExports",
+            "action": "Revoke call data sharing"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "delivery"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get deliveries"
+          },
+          {
+            "name": "Redeliver",
+            "value": "redeliver",
+            "action": "Redeliver the same event"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getAll",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "action": "Get tools"
+          },
+          {
+            "name": "Register Version",
+            "value": "register",
+            "action": "Register a tool version"
+          },
+          {
+            "name": "Disable",
+            "value": "disable",
+            "action": "Disable a tool"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "test",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "subscription"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Send Setup Event",
+            "value": "test",
+            "action": "Send a synthetic setup event"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Agent ID",
+        "name": "agentId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "getAll",
+              "register"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Call ID",
+        "name": "callId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "call"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Delivery ID",
+        "name": "deliveryId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "delivery"
+            ],
+            "operation": [
+              "redeliver"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Tool ID",
+        "name": "toolId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "disable"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Subscription ID",
+        "name": "subscriptionId",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "subscription"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Return All",
+        "name": "returnAll",
+        "type": "boolean",
+        "description": "Whether to return all results or only up to a given limit",
+        "default": false,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "agent",
+              "delivery",
+              "tool"
+            ],
+            "operation": [
+              "getAll"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Limit",
+        "name": "limit",
+        "type": "number",
+        "typeOptions": {
+          "minValue": 1
+        },
+        "default": 50,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "agent",
+              "delivery",
+              "tool"
+            ],
+            "operation": [
+              "getAll"
+            ],
+            "returnAll": [
+              false
+            ]
+          }
+        },
+        "description": "Max number of results to return"
+      },
+      {
+        "displayName": "Tool Name",
+        "name": "toolName",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        },
+        "description": "A stable function name, using letters, digits and underscores"
+      },
+      {
+        "displayName": "Description",
+        "name": "description",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        },
+        "description": "Explain when the agent should use this tool"
+      },
+      {
+        "displayName": "Workflow Webhook URL",
+        "name": "destination",
+        "type": "string",
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        },
+        "description": "Production HTTPS URL of your business workflow. Return a typed completed result after business work finishes."
+      },
+      {
+        "displayName": "Input Schema",
+        "name": "inputSchema",
+        "type": "json",
+        "default": "{\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false}",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Result Schema",
+        "name": "outputSchema",
+        "type": "json",
+        "default": "{\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false}",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "tool"
+            ],
+            "operation": [
+              "register"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Options",
+        "name": "options",
+        "type": "collection",
+        "default": {},
+        "placeholder": "Add Option",
+        "options": [
+          {
+            "displayName": "Effect",
+            "name": "effect",
+            "type": "options",
+            "default": "read",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "tool"
+                ],
+                "/operation": [
+                  "register"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "Read",
+                "value": "read"
+              },
+              {
+                "name": "Write",
+                "value": "write"
+              },
+              {
+                "name": "Escalate or Notify",
+                "value": "escalate"
+              }
+            ],
+            "description": "Writes and escalation require caller confirmation before dispatch"
+          },
+          {
+            "displayName": "Include Shared Data",
+            "name": "includeData",
+            "type": "multiOptions",
+            "default": [],
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "call"
+                ],
+                "/operation": [
+                  "get"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "Callback Details",
+                "value": "lead"
+              },
+              {
+                "name": "Transcript",
+                "value": "transcript"
+              },
+              {
+                "name": "Conversation Context",
+                "value": "context"
+              }
+            ],
+            "description": "Requires explicit caller sharing permission and the matching key scopes. Expired or withdrawn details are unavailable."
+          },
+          {
+            "displayName": "Operation Identity",
+            "name": "operationIdentity",
+            "type": "string",
+            "default": "",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "speech",
+                  "voice"
+                ]
+              }
+            },
+            "description": "Use a stable business identity to safely check retries across workflow runs. Blank uses this execution, node and input item."
+          },
+          {
+            "displayName": "Purpose",
+            "name": "purpose",
+            "type": "options",
+            "default": "business",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "tool"
+                ],
+                "/operation": [
+                  "register"
+                ]
+              }
+            },
+            "options": [
+              {
+                "name": "Business Action",
+                "value": "business"
+              },
+              {
+                "name": "Verify Caller",
+                "value": "verify_caller"
+              }
+            ],
+            "description": "A verification tool must be read-only and must not itself require a verified caller. It returns verified and subject after your business system checks identity."
+          },
+          {
+            "displayName": "Request Timeout (Ms)",
+            "name": "requestTimeoutMs",
+            "type": "number",
+            "default": 0,
+            "description": "Zero leaves the request without a client timeout. Server policy still applies."
+          },
+          {
+            "displayName": "Require Verified Caller",
+            "name": "verifiedCaller",
+            "type": "boolean",
+            "default": true,
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "tool"
+                ],
+                "/operation": [
+                  "register"
+                ]
+              }
+            },
+            "description": "Whether to require verified caller identity before accessing sensitive information"
+          },
+          {
+            "displayName": "Simplify",
+            "name": "simplify",
+            "type": "boolean",
+            "default": true,
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "voice"
+                ],
+                "/operation": [
+                  "get",
+                  "getAll"
+                ]
+              }
+            }
+          },
+          {
+            "displayName": "Speech Transport",
+            "name": "speechTransport",
+            "type": "options",
+            "default": "http",
+            "options": [
+              {
+                "name": "HTTP",
+                "value": "http"
+              },
+              {
+                "name": "WebSocket",
+                "value": "websocket"
+              }
+            ],
+            "description": "Use the same independent Service URL. WebSocket needs a supported server-side n8n host and has no replay or automatic HTTP fallback.",
+            "displayOptions": {
+              "show": {
+                "/resource": [
+                  "speech"
+                ],
+                "/operation": [
+                  "textToSpeech"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "iconUrl": {
+      "light": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/Voicely/voicely.svg",
+      "dark": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/Voicely/voicely.svg"
+    },
+    "communityNodePackageVersion": "0.2.1",
+    "codex": {
+      "categories": [
+        "AI"
+      ],
+      "subcategories": {
+        "AI": [
+          "Tools"
+        ],
+        "Tools": [
+          "Other Tools"
+        ]
+      },
+      "resources": {
+        "primaryDocumentation": [
+          {
+            "url": "https://tryvoicely.com/developers/api"
+          }
+        ],
+        "credentialDocumentation": [
+          {
+            "url": "https://github.com/voicelystudio/n8n-nodes-voicely#credentials"
+          }
+        ]
+      }
+    },
+    "name": "@voicelystudio/n8n-nodes-voicely.voicelyTool"
+  },
+  {
+    "displayName": "Voicely Tool",
+    "group": [
+      "transform"
+    ],
+    "version": 1,
+    "subtitle": "={{$parameter[\"operation\"] + \": \" + $parameter[\"resource\"]}}",
+    "description": "Generate speech and discover Voicely voices",
+    "defaults": {
+      "name": "Voicely"
+    },
+    "inputs": [],
+    "outputs": [
+      "ai_tool"
+    ],
+    "credentials": [
+      {
+        "name": "voicelyApi",
+        "required": true
+      }
+    ],
+    "properties": [
+      {
+        "displayName": "Tool Description",
+        "name": "descriptionType",
+        "type": "options",
+        "noDataExpression": true,
+        "options": [
+          {
+            "name": "Set Automatically",
+            "value": "auto",
+            "description": "Automatically set based on resource and operation"
+          },
+          {
+            "name": "Set Manually",
+            "value": "manual",
+            "description": "Manually set the description"
+          }
+        ],
+        "default": "auto"
+      },
+      {
+        "displayName": "Description",
+        "name": "toolDescription",
+        "type": "string",
+        "default": "Generate speech and discover Voicely voices",
+        "required": true,
+        "typeOptions": {
+          "rows": 2
+        },
+        "description": "Explain to the LLM what this tool does, a good, specific description would allow LLMs to produce expected results much more often",
+        "displayOptions": {
+          "show": {
+            "descriptionType": [
+              "manual"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Resource",
+        "name": "resource",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "speech",
+        "options": [
+          {
+            "name": "Speech",
+            "value": "speech"
+          },
+          {
+            "name": "Voice",
+            "value": "voice"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "generate",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Generate",
+            "value": "generate",
+            "action": "Generate speech"
+          },
+          {
+            "name": "Generate via WebSocket",
+            "value": "generateWebSocket",
+            "action": "Generate speech via websocket",
+            "description": "Receive WebSocket audio and return one complete binary file"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Operation",
+        "name": "operation",
+        "type": "options",
+        "noDataExpression": true,
+        "default": "getMany",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "voice"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getMany",
+            "action": "Get many voices"
+          },
+          {
+            "name": "Custom API Call",
+            "value": "__CUSTOM_API_CALL__"
+          }
+        ]
+      },
+      {
+        "displayName": "Text",
+        "name": "text",
+        "type": "string",
+        "typeOptions": {
+          "rows": 4
+        },
+        "default": "",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Voice Name or ID",
+        "name": "voiceId",
+        "type": "options",
+        "typeOptions": {
+          "loadOptionsMethod": "getVoices"
+        },
+        "default": "",
+        "required": true,
+        "description": "Choose from the list, or specify an ID using an <a href=\"https://docs.n8n.io/code/expressions/\">expression</a>",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Model Name or ID",
+        "name": "modelId",
+        "type": "options",
+        "typeOptions": {
+          "loadOptionsMethod": "getModels"
+        },
+        "default": "",
+        "description": "Choose from the list, or specify an ID using an <a href=\"https://docs.n8n.io/code/expressions/\">expression</a>",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Language Code",
+        "name": "languageCode",
+        "type": "string",
+        "default": "",
+        "description": "ISO language or supported locale. Leave empty for API detection. Roman Urdu requires ur.",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        }
+      },
+      {
+        "displayName": "Output Format",
+        "name": "outputFormat",
+        "type": "options",
+        "default": "mp3_44100_128",
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "MP3",
+            "value": "mp3_44100_128"
+          },
+          {
+            "name": "PCM 16 kHz (Raw)",
+            "value": "pcm_16000"
+          },
+          {
+            "name": "PCM 24 kHz (Raw)",
+            "value": "pcm_24000"
+          },
+          {
+            "name": "Mu-Law 8 kHz (Raw)",
+            "value": "ulaw_8000"
+          }
+        ]
+      },
+      {
+        "displayName": "Put Output in Field",
+        "name": "binaryProperty",
+        "type": "string",
+        "default": "audio",
+        "required": true,
+        "displayOptions": {
+          "show": {
+            "resource": [
+              "speech"
+            ]
+          }
+        },
+        "description": "The binary field for the generated audio"
+      },
+      {
+        "displayName": "Item Concurrency",
+        "name": "itemConcurrency",
+        "type": "number",
+        "default": 1,
+        "description": "Simultaneous item requests in this execution. Configurable without an upper ceiling; the API remains the capacity authority."
+      },
+      {
+        "displayName": "Options",
+        "name": "options",
+        "type": "collection",
+        "placeholder": "Add Option",
+        "default": {},
+        "options": [
+          {
+            "displayName": "Idempotency Key",
+            "name": "idempotencyKey",
+            "type": "string",
+            "default": "",
+            "description": "HTTP Generate only. WebSocket does not support idempotent replay. Stable business job key for HTTP replay across workflow reruns."
+          },
+          {
+            "displayName": "Request Timeout (Ms)",
+            "name": "requestTimeoutMs",
+            "type": "number",
+            "default": 180000,
+            "description": "HTTP request or complete WebSocket session timeout in milliseconds. Zero disables it. No coded upper ceiling."
+          }
+        ]
+      }
+    ],
+    "iconUrl": {
+      "light": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/Voicely/voicely.svg",
+      "dark": "icons/@voicelystudio/n8n-nodes-voicely/dist/nodes/Voicely/voicely.svg"
+    },
+    "communityNodePackageVersion": "0.2.1",
+    "__loadOptionsMethods": [
+      "getVoices",
+      "getModels"
+    ],
+    "codex": {
+      "categories": [
+        "AI"
+      ],
+      "subcategories": {
+        "AI": [
+          "Tools"
+        ],
+        "Tools": [
+          "Other Tools"
+        ]
+      },
+      "resources": {
+        "primaryDocumentation": [
+          {
+            "url": "https://tryvoicely.com/developers/api"
+          }
+        ],
+        "credentialDocumentation": [
+          {
+            "url": "https://github.com/voicelystudio/n8n-nodes-voicely#credentials"
+          }
+        ]
+      }
+    },
+    "name": "@voicelystudio/n8n-nodes-voicely.voicelyTool"
+  }
+]

@@ -38,3 +38,7 @@ Use the same SSH tunnel and localhost5680 editor, then hard refresh. Keep Servic
 6. Existing saved speech workflows retain parameter paths. Existing generic Voice Get Many still works with no Catalog Options. V1 stays version1; do not upgrade by editing its node version.
 
 Authenticated rendered-field/customer operation UAT belongs to the owner. Runtime descriptor checks and browser sign-in-shell checks are distinct from a real credentialed workflow PASS. Activation evidence, actual checkpoint, previous/new package identity and rollback are recorded separately after the guarded editor update.
+
+## Activation completed
+
+Source `c5e185fb77c19253e3aa58d843591cb6203afb15` now runs only in the existing review UAT editorlocalhost5680. User state preserved. Runtime descriptor and explicit Chromium/signin checks pass; owner credentialed discovery UAT remains pending. See `MODEL-FIRST-ACTIVATION.md` for exact identities and rollback. The first browser probe failed on a premature root redirect assertion, then passed after a narrow harness fix; no app source changed.

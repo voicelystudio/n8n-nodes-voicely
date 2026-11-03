@@ -1,0 +1,8 @@
+{
+  "result": "browser probe failed before saving readiness evidence",
+  "cause": "probe asserted root-to-signin SPA redirect immediately after networkidle; browser URL still root",
+  "fix": "navigate directly to public /signin and wait for password control",
+  "appSourceChanged": false,
+  "ownerSessionAccessed": false,
+  "activationStatus": "healthy; owner credentialed UAT still pending"
+}

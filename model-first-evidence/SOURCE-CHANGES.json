@@ -7,9 +7,24 @@
       "afterSha256": "6d2e62aa1c4f103f1a2a176fc1ec4c9ac9ff007b57a15007947602b1cc69f465"
     },
     {
+      "path": "MODEL-FIRST-ACTIVATION.md",
+      "beforeSha256": null,
+      "afterSha256": "4c0da3a63dc2d38c54defc479f0a819605225314a2ceed0cab4e289f7d805a0f"
+    },
+    {
+      "path": "MODEL-FIRST-HANDOFF.md",
+      "beforeSha256": null,
+      "afterSha256": "977d92669bb1b0b4ee5595998393d3330e02583334e907ed3b1dfcb7dc2eb62f"
+    },
+    {
       "path": "README.md",
       "beforeSha256": "859eb9a58016c5be5273858ce9054921851fe44263b498c3025d3a7ab417a0c1",
       "afterSha256": "45ec48851a6fc53a68bca56f75787c72d67cef27ff9dff6c312cfa081db755c4"
+    },
+    {
+      "path": "UAT-GUIDE.md",
+      "beforeSha256": "436e5195bd8140c193088183cd4562115c8605ca25e99ebd78fbab1753eb9503",
+      "afterSha256": "a6b688488b5e379cc23fd6648bd74e92e9797f44efbb17d8977e9555f30ca631"
     },
     {
       "path": "examples/studio-v2-model-first-discovery.json",
