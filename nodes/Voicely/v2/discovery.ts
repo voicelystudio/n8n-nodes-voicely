@@ -88,6 +88,11 @@ export function modelRows(raw: unknown, operation?: string): IDataObject[] {
         ...(typeof row.can_use_style === "boolean"
           ? { can_use_style: row.can_use_style }
           : {}),
+        ...(Array.isArray(row.style_transports) &&
+        row.style_transports.every((v) => v === "http")
+          ? { style_transports: row.style_transports }
+          : {}),
+        ...(row.style_streaming === false ? { style_streaming: false } : {}),
         ...(Array.isArray(row.transports) &&
         row.transports.every((t) => ["http", "websocket"].includes(String(t)))
           ? { transports: row.transports }
