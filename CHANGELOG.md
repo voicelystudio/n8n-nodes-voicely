@@ -2,6 +2,7 @@
 
 ## 0.2.1 (2026-11-03) — review-correction candidate
 
+- Add Model Get Many, operation/model-filtered Voice Get Many, model-first speech options ordering and saved-workflow compatibility; preserve service-authoritative routing and voice selection.
 - Consolidate the standalone Agents action into Studio v2 Agent, Call, Delivery, Subscription and Tool resources; retain the companion signed-event Trigger.
 - Select Studio or Agents credentials by resource without changing service endpoints, billing or V1 contracts.
 - Remove Page Size from Get Many; keep Return All/Limit and internal pagination, including agent-list limits.

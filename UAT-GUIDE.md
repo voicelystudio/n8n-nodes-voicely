@@ -47,3 +47,7 @@ pm2 stop voicely-n8n-review-v021-dev
 ```
 
 Do not stop all processes. Original editor remains localhost5678. New editor's synthetic local SQLite store/encryption configuration belongs only to this UAT runtime. No production DB/config/key was copied; production not accessed. No PM2 save/startup configuration, nginx, DNS, billing, provider limits or product services changed. The new editor is intentionally not guaranteed across a VM reboot.
+
+## Later approved model-first refinement
+
+The current candidate adds an eighth resource, **Model**, to the original seven. The first six owner Voice catalog steps passed before this refinement. Follow `MODEL-FIRST-HANDOFF.md` for the new Model → compatible Voices discovery pass, using the same localhost5680 editor and staging Suite credential. No new owner login or credential setup is required after the editor update; hard refresh is sufficient.

@@ -1,0 +1,15 @@
+
+> @voicelystudio/n8n-nodes-voicely@0.2.1 lint
+> n8n-node lint
+
+┌   n8n-node lint  v0.54.0
+[0m[0m
+[0m[4m/tmp/voicely-v021-model-first-verify-1qaqa3lk/nodes/Voicely/v2/VoicelyV2.node.ts[24m[0m
+[0m  [2m186:17[22m  [31merror[39m  Use `NodeOperationError`, `NodeApiError`, `TriggerCloseError`, `UserError`, `OperationalError`, or `UnexpectedError` [non-autofixable]  [2mn8n-nodes-base/node-execute-block-wrong-error-thrown[22m[0m
+[0m[0m
+[0m[31m[1m✖ 1 problem (1 error, 0 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[0m
+(node:354050) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:354086) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

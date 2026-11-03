@@ -21,6 +21,7 @@ export const properties: INodeProperties[] = [
       { name: "Agent", value: "agent" },
       { name: "Call", value: "call" },
       { name: "Delivery", value: "delivery" },
+      { name: "Model", value: "model" },
       { name: "Speech", value: "speech" },
       { name: "Subscription", value: "subscription" },
       { name: "Tool", value: "tool" },
@@ -71,11 +72,175 @@ export const properties: INodeProperties[] = [
     ],
   },
   {
+    displayName: "Model and Speech Options",
+    name: "additionalOptions",
+    type: "collection",
+    default: {},
+    placeholder: "Choose Model or Add Option",
+    displayOptions: { show: speech },
+    options: [
+      {
+        displayName: "Custom Style Strength",
+        name: "styleStrength",
+        type: "string",
+        default: "",
+        description:
+          "Custom model only: enter a number from 0 to 1 or use an expression. Leave empty for the service default. Fixed presets refuse this override.",
+        displayOptions: { show: { "/operation": ["speechToSpeech"] } },
+      },
+      {
+        displayName: "Diarize",
+        name: "diarize",
+        type: "boolean",
+        default: true,
+        displayOptions: { show: { "/operation": ["speechToText"] } },
+      },
+      {
+        displayName: "Language Code",
+        name: "languageCode",
+        type: "string",
+        default: "",
+      },
+      {
+        displayName: "Model",
+        name: "model",
+        description:
+          "Choose a model before selecting a voice. After changing the model, reselect a compatible voice. Blank keeps the service default; presets and Custom choices come from the service.",
+        type: "resourceLocator",
+        typeOptions: { loadOptionsDependsOn: ["operation"] },
+        default: { mode: "list", value: "" },
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            typeOptions: { searchListMethod: "getModels", searchable: true },
+          },
+          { displayName: "ID", name: "id", type: "string" },
+        ],
+      },
+      {
+        displayName: "Number of Speakers",
+        name: "numberOfSpeakers",
+        type: "number",
+        default: 2,
+        displayOptions: { show: { "/operation": ["speechToText"] } },
+        description:
+          "Expected count, provided explicitly only when this option is selected",
+      },
+      {
+        displayName: "Output Format",
+        name: "outputFormat",
+        type: "options",
+        default: "mp3_44100_128",
+        options: formatIds.map((value) => ({
+          name: value.replaceAll("_", " "),
+          value,
+        })),
+        displayOptions: { hide: { "/operation": ["speechToText"] } },
+      },
+      {
+        displayName: "Voice Settings",
+        name: "voiceSettings",
+        type: "json",
+        default: "{}",
+        description:
+          "Voicely voice controls: stability, similarity_boost, style, use_speaker_boost and speed",
+        displayOptions: { hide: { "/operation": ["speechToText"] } },
+      },
+    ],
+  },
+  {
+    displayName: "Operation",
+    name: "operation",
+    type: "options",
+    noDataExpression: true,
+    default: "getAll",
+    displayOptions: { show: { resource: ["model"] } },
+    options: [{ name: "Get Many", value: "getAll", action: "Get many models" }],
+  },
+  {
+    displayName: "Catalog Options",
+    name: "catalogOptions",
+    type: "collection",
+    default: {},
+    placeholder: "Add Filter",
+    displayOptions: {
+      show: { resource: ["model", "voice"], operation: ["getAll"] },
+    },
+    options: [
+      {
+        displayName: "Model",
+        name: "model",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        description:
+          "Choose a speech operation first, then a compatible model. Leave empty to use the service default for that operation.",
+        displayOptions: {
+          show: {
+            "/resource": ["voice"],
+            "/catalogOptions.speechOperation": [
+              "textToSpeech",
+              "speechToSpeech",
+            ],
+          },
+        },
+        typeOptions: {
+          loadOptionsDependsOn: ["catalogOptions.speechOperation", "resource"],
+        },
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            typeOptions: { searchListMethod: "getModels", searchable: true },
+          },
+          { displayName: "ID", name: "id", type: "string" },
+        ],
+      },
+      {
+        displayName: "Speech Operation",
+        name: "speechOperation",
+        type: "options",
+        default: "all",
+        displayOptions: { show: { "/resource": ["model"] } },
+        options: [
+          { name: "All (Unfiltered Catalog)", value: "all" },
+          { name: "Text to Speech", value: "textToSpeech" },
+          { name: "Speech to Speech", value: "speechToSpeech" },
+          { name: "Speech to Text", value: "speechToText" },
+        ],
+        description:
+          "Filter by intended use. Speech to Text has no voice selection. An unfiltered voice list does not imply compatibility with every model.",
+      },
+      {
+        displayName: "Speech Operation",
+        name: "speechOperation",
+        type: "options",
+        default: "all",
+        displayOptions: { show: { "/resource": ["voice"] } },
+        options: [
+          { name: "All (Unfiltered Catalog)", value: "all" },
+          { name: "Text to Speech", value: "textToSpeech" },
+          { name: "Speech to Speech", value: "speechToSpeech" },
+        ],
+        description:
+          "Filter by intended use. Speech to Text has no voice selection. An unfiltered voice list does not imply compatibility with every model.",
+      },
+    ],
+  },
+  {
     displayName: "Voice",
     name: "voice",
     type: "resourceLocator",
     typeOptions: {
-      loadOptionsDependsOn: ["operation", "additionalOptions.model"],
+      loadOptionsDependsOn: [
+        "resource",
+        "operation",
+        "additionalOptions.model",
+        "catalogOptions.speechOperation",
+        "catalogOptions.model",
+      ],
     },
     default: { mode: "list", value: "" },
     required: true,
@@ -164,7 +329,9 @@ export const properties: INodeProperties[] = [
     type: "boolean",
     description: "Whether to return all results or only up to a given limit",
     default: false,
-    displayOptions: { show: { resource: ["voice"], operation: ["getAll"] } },
+    displayOptions: {
+      show: { resource: ["model", "voice"], operation: ["getAll"] },
+    },
   },
   {
     displayName: "Limit",
@@ -175,7 +342,11 @@ export const properties: INodeProperties[] = [
     },
     default: 50,
     displayOptions: {
-      show: { resource: ["voice"], operation: ["getAll"], returnAll: [false] },
+      show: {
+        resource: ["model", "voice"],
+        operation: ["getAll"],
+        returnAll: [false],
+      },
     },
     description: "Max number of results to return",
   },
@@ -187,85 +358,6 @@ export const properties: INodeProperties[] = [
     default: "audio",
     required: true,
     displayOptions: { show: { operation: ["textToSpeech", "speechToSpeech"] } },
-  },
-  {
-    displayName: "Additional Options",
-    name: "additionalOptions",
-    type: "collection",
-    default: {},
-    placeholder: "Add Option",
-    displayOptions: { show: speech },
-    options: [
-      {
-        displayName: "Custom Style Strength",
-        name: "styleStrength",
-        type: "string",
-        default: "",
-        description:
-          "Custom model only: enter a number from 0 to 1 or use an expression. Leave empty for the service default. Fixed presets refuse this override.",
-        displayOptions: { show: { "/operation": ["speechToSpeech"] } },
-      },
-      {
-        displayName: "Diarize",
-        name: "diarize",
-        type: "boolean",
-        default: true,
-        displayOptions: { show: { "/operation": ["speechToText"] } },
-      },
-      {
-        displayName: "Language Code",
-        name: "languageCode",
-        type: "string",
-        default: "",
-      },
-      {
-        displayName: "Model",
-        name: "model",
-        description:
-          "Leave empty for the service default. Speech-to-Speech presets and Custom choices come from the service.",
-        type: "resourceLocator",
-        typeOptions: { loadOptionsDependsOn: ["operation"] },
-        default: { mode: "list", value: "" },
-        modes: [
-          {
-            displayName: "From List",
-            name: "list",
-            type: "list",
-            typeOptions: { searchListMethod: "getModels", searchable: true },
-          },
-          { displayName: "ID", name: "id", type: "string" },
-        ],
-      },
-      {
-        displayName: "Number of Speakers",
-        name: "numberOfSpeakers",
-        type: "number",
-        default: 2,
-        displayOptions: { show: { "/operation": ["speechToText"] } },
-        description:
-          "Expected count, provided explicitly only when this option is selected",
-      },
-      {
-        displayName: "Output Format",
-        name: "outputFormat",
-        type: "options",
-        default: "mp3_44100_128",
-        options: formatIds.map((value) => ({
-          name: value.replaceAll("_", " "),
-          value,
-        })),
-        displayOptions: { hide: { "/operation": ["speechToText"] } },
-      },
-      {
-        displayName: "Voice Settings",
-        name: "voiceSettings",
-        type: "json",
-        default: "{}",
-        description:
-          "Voicely voice controls: stability, similarity_boost, style, use_speaker_boost and speed",
-        displayOptions: { hide: { "/operation": ["speechToText"] } },
-      },
-    ],
   },
 
   ...automationProperties,

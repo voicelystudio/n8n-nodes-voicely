@@ -25,14 +25,14 @@ test('packed manifest has one regular node and one trigger, no standalone Agents
   assert.equal(require('../nodes/Voicely/Voicely.node.json').nodeVersion,'1.0');
   assert.deepEqual(Object.keys(new Voicely().nodeVersions).map(Number),[1,2]);
 });
-test('all seven Studio resources have exactly one operation selector and the correct credentials', () => {
-  const expected=['agent','call','delivery','speech','subscription','tool','voice'];
+test('all eight Studio resources have exactly one operation selector and the correct credentials', () => {
+  const expected=['agent','call','delivery','model','speech','subscription','tool','voice'];
   assert.deepEqual(properties.find(p=>p.name==='resource').options.map(p=>p.value),expected);
   for(const resource of expected){
     const p={resource,operation:'getAll',returnAll:false};
     assert.equal(properties.filter(f=>f.name==='operation'&&visible(p,f)).length,1,resource);
     const credentials=studio.description.credentials.filter(c=>visible(p,c));
-    assert.equal(credentials.length,1);assert.equal(credentials[0].name,['speech','voice'].includes(resource)?'voicelySuiteApi':'voicelyAutomationApi');
+    assert.equal(credentials.length,1);assert.equal(credentials[0].name,['model','speech','voice'].includes(resource)?'voicelySuiteApi':'voicelyAutomationApi');
   }
 });
 test('Call Get does not show Voice locator or voice-only Simplify control', () => {
@@ -42,7 +42,7 @@ test('Call Get does not show Voice locator or voice-only Simplify control', () =
 });
 test('Get Many UI has Return All and conditional Limit for agents, deliveries, tools and voices; no Page Size',()=>{
   assert.equal(JSON.stringify([properties,trigger.description.properties]).includes('Page Size'),false);
-  for(const resource of ['agent','delivery','tool','voice']){
+  for(const resource of ['agent','delivery','tool','model','voice']){
     for(const returnAll of [false,true]){
       const p={resource,operation:'getAll',returnAll};
       assert.equal(properties.filter(f=>f.name==='returnAll'&&visible(p,f)).length,1,resource);

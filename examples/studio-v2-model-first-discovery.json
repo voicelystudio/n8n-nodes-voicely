@@ -1,0 +1,89 @@
+{
+  "name": "Voicely Studio v2 - model-first voice discovery",
+  "active": false,
+  "nodes": [
+    {
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "models",
+      "name": "Get Models",
+      "type": "@voicelystudio/n8n-nodes-voicely.voicely",
+      "typeVersion": 2,
+      "position": [
+        280,
+        0
+      ],
+      "parameters": {
+        "resource": "model",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 1,
+        "catalogOptions": {
+          "speechOperation": "textToSpeech"
+        }
+      }
+    },
+    {
+      "id": "voices",
+      "name": "Get Compatible Voices",
+      "type": "@voicelystudio/n8n-nodes-voicely.voicely",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ],
+      "parameters": {
+        "resource": "voice",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 3,
+        "catalogOptions": {
+          "speechOperation": "textToSpeech",
+          "model": {
+            "mode": "id",
+            "value": "={{ $json.model_id }}"
+          }
+        },
+        "options": {
+          "simplify": true
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Get Models",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Models": {
+      "main": [
+        [
+          {
+            "node": "Get Compatible Voices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "filename": "voicelystudio-n8n-nodes-voicely-0.2.1.tgz",
+  "sha256": "dba0634695cb40a2fa50fd77e0b7faec7d97e0d81ab316a59dc834f0eab0d2d9",
+  "files": 63,
+  "bytes": 55570,
+  "version": "0.2.1",
+  "regularNodes": 1,
+  "companionTriggers": 1,
+  "sourceMatchesVerificationSnapshot": true,
+  "tests": {
+    "pass": 182,
+    "fail": 0,
+    "skip": 0
+  }
+}

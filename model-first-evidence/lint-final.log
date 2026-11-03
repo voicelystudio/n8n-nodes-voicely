@@ -1,0 +1,9 @@
+
+> @voicelystudio/n8n-nodes-voicely@0.2.1 lint
+> n8n-node lint
+
+┌   n8n-node lint  v0.54.0
+(node:354344) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:354391) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

@@ -6,7 +6,7 @@ Create speech, transcribe recordings, convert voices, and connect Voicely Callin
 
 | Node | What it does |
 | --- | --- |
-| **Voicely Studio** | Speech and Voice resources handle HTTP/WebSocket TTS, STT, STS and consented voice profiles. Agent, Call, Delivery, Subscription and Tool resources handle discovery, permitted call details, tool registration and automation events. Audio output remains binary data. |
+| **Voicely Studio** | Model discovery and Speech/Voice resources handle HTTP/WebSocket TTS, STT, STS and consented voice profiles. Agent, Call, Delivery, Subscription and Tool resources handle discovery, permitted call details, tool registration and automation events. Audio output remains binary data. |
 | **Voicely Agents Trigger** | Receive authenticated, signed completed-call events for post-call workflows. |
 
 [Voicely integration guide](https://tryvoicely.com/integrations/n8n) · [Account and API access](https://tryvoicely.com/api-access)
@@ -37,7 +37,11 @@ For **Voicely Agents API**, set a strong random **Webhook Signing Secret** priva
 
 Start with the inactive, credential-free [Studio voice catalog example](examples/studio-v2-voice-catalog.json). Import it, select your Studio credential and execute it to list voices without generating audio.
 
-For TTS, select a voice/model, enter text and choose an output binary field. For STT or STS, provide audio in the configured input binary field. Connect generated audio to playback, storage or delivery nodes. Consented voice creation takes the reference audio, consent recording and profile name; reuse the resulting owned profile ID for later operations rather than creating it for every request.
+For model-first discovery, use **Model → Get Many** with optional **Catalog Options → Speech Operation**. The service supplies model IDs/names and advertised operations; the connector does not invent model, voice or language mappings. Return All and Limit control the returned model items.
+
+For model-specific voices, use **Voice → Get Many → Catalog Options**: first add Speech Operation (Text to Speech or Speech to Speech), then Model. The node forwards both filters on every catalog page and uses the service's compatible stock/owned voice results. Leave Catalog Options empty to retain the original unfiltered management catalog; that list is not a promise of universal model compatibility. STT is a model-only workflow and has no voice selector.
+
+For TTS, select the model under **Model and Speech Options** before selecting Voice, then enter text and choose an output binary field. Changing the model refreshes voice discovery; reselect a compatible voice. Explicit voice/model IDs and saved settings are never silently substituted. Backend admission remains authoritative. Existing configured generation workflows need no separate discovery nodes or extra catalog requests. For STT or STS, provide audio in the configured input binary field. Connect generated audio to playback, storage or delivery nodes. Consented voice creation takes the reference audio, consent recording and profile name; reuse the resulting owned profile ID for later operations rather than creating it for every request.
 
 STS presets separate voice identity from conversion settings:
 
@@ -48,6 +52,12 @@ STS presets separate voice identity from conversion settings:
 Fixed presets reject incompatible overrides. Catalog availability, pricing, concurrency and deadlines come from the service. CPU conversion can take longer than the audio duration; choose a suitable workflow timeout. The connector does not grant credits. The generous n8n builder campaign is not active as part of this release.
 
 Existing [HTTP speech](examples/http-speech.json), [WebSocket speech](examples/websocket-speech.json) and [AI voice-tool](examples/ai-agent-voices.json) examples continue to target node version 1. Their credentials remain separate from Studio version 2.
+
+### Optional chained discovery
+
+An inactive [model-first catalog example](examples/studio-v2-model-first-discovery.json) links Model Get Many to Voice Get Many without synthesis. With all models returned, Voice executes once per model input. Model ID is mapped with `={{ $json.model_id }}`; each output retains n8n item linkage. If a later generation node needs the selected model, use `={{ $('Get Models').item.json.model_id }}` and `={{ $json.voice_id }}` for the compatible voice. Review n8n execution behavior before adding synthesis: returning every voice could generate audio once per item. Start with one model and one voice.
+
+Discovery results reflect the credential's actual Service URL and current catalog. The package does not activate deferred backend models or make the Suite catalog equal to a separately deployed Web/Public API catalog. No provider calls occur when listing models/voices.
 
 ## Calling Agent business tools
 

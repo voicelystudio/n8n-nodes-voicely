@@ -12,6 +12,13 @@ import type {
 import { properties } from "./properties";
 import { automationResourceIds, executeAutomation } from "./automation";
 import { executionOption } from "./options";
+import {
+  catalogOptions,
+  CatalogSelectionError,
+  modelRows,
+  operationScope,
+  voiceFilters,
+} from "./discovery";
 import { websocketRequest } from "./websocket";
 import {
   asObject,
@@ -108,7 +115,7 @@ export class VoicelyV2 implements INodeType {
       {
         name: "voicelySuiteApi",
         required: true,
-        displayOptions: { show: { resource: ["speech", "voice"] } },
+        displayOptions: { show: { resource: ["model", "speech", "voice"] } },
       },
       {
         name: "voicelyAutomationApi",
@@ -126,12 +133,14 @@ export class VoicelyV2 implements INodeType {
         paginationToken?: string,
       ): Promise<INodeListSearchResult> {
         const operation = String(this.getNodeParameter("operation", "") ?? ""),
-          scope: Record<string, string> = {
-            textToSpeech: "speech.synthesize",
-            speechToSpeech: "speech.convert",
-          },
-          required = scope[operation],
-          query = new URLSearchParams();
+          resource = String(this.getNodeParameter("resource", "speech")),
+          required = ["textToSpeech", "speechToSpeech"].includes(operation)
+            ? operationScope(operation)
+            : undefined;
+        const query =
+          resource === "voice" && operation === "getAll"
+            ? voiceFilters(this.getNodeParameter("catalogOptions", {}))
+            : new URLSearchParams();
         if (paginationToken) query.set("after", paginationToken);
         if (required) {
           query.set("operation", required);
@@ -161,33 +170,34 @@ export class VoicelyV2 implements INodeType {
         this: ILoadOptionsFunctions,
         filter?: string,
       ): Promise<INodeListSearchResult> {
-        const data = (await request(this, "/v1/models")).body,
-          list = Array.isArray(data) ? data : asObject(data).models;
-        if (!Array.isArray(list))
+        const resource = String(this.getNodeParameter("resource", "speech")),
+          operation = String(this.getNodeParameter("operation", "") ?? ""),
+          filters = ["model", "voice"].includes(resource)
+            ? catalogOptions(this.getNodeParameter("catalogOptions", {}))
+            : undefined,
+          required = filters
+            ? operationScope(filters.speechOperation)
+            : ["textToSpeech", "speechToText", "speechToSpeech"].includes(
+                  operation,
+                )
+              ? operationScope(operation)
+              : undefined;
+        if (resource === "voice" && required === "speech.transcribe")
           throw new NodeOperationError(
             this.getNode(),
-            "Voicely model response is invalid",
+            "Speech to Text has no voice selection. Choose Text to Speech or Speech to Speech.",
           );
-        const operation = String(this.getNodeParameter("operation", "") ?? ""),
-          scope: Record<string, string> = {
-            textToSpeech: "speech.synthesize",
-            speechToText: "speech.transcribe",
-            speechToSpeech: "speech.convert",
-          },
-          required = scope[operation];
+        const list = modelRows(
+          (await request(this, "/v1/models")).body,
+          required,
+        );
         return {
           results: list
-            .map(asObject)
-            .filter(
-              (v) =>
-                !required ||
-                (Array.isArray(v.operations) &&
-                  v.operations.some((operation) => operation === required)),
-            )
             .filter(
               (v) =>
                 !filter ||
-                String(v.name).toLowerCase().includes(filter.toLowerCase()),
+                String(v.name).toLowerCase().includes(filter.toLowerCase()) ||
+                String(v.model_id).toLowerCase().includes(filter.toLowerCase()),
             )
             .map((v) => ({ name: String(v.name), value: String(v.model_id) })),
         };
@@ -214,6 +224,23 @@ export class VoicelyV2 implements INodeType {
         );
         if (!Number.isSafeInteger(timeout) || timeout < 0)
           throw Error("timeout_invalid");
+        if (resource === "model" && operation === "getAll") {
+          const filters = catalogOptions(
+              this.getNodeParameter("catalogOptions", index, {}),
+            ),
+            scope = operationScope(filters.speechOperation),
+            all = Boolean(this.getNodeParameter("returnAll", index, false)),
+            limit = all
+              ? undefined
+              : positiveInteger(this.getNodeParameter("limit", index, 50)),
+            rows = modelRows(
+              (await request(this, "/v1/models", { timeout })).body,
+              scope,
+            );
+          for (const row of limit === undefined ? rows : rows.slice(0, limit))
+            output.push({ json: row, pairedItem: { item: index } });
+          continue;
+        }
         const item = input[index],
           parameters = optionsOf(
             this.getNodeParameter("additionalOptions", index, {}),
@@ -266,18 +293,23 @@ export class VoicelyV2 implements INodeType {
               : positiveInteger(this.getNodeParameter("limit", index)),
             pageSize = 50,
             simplify = Boolean(executionOption(this, index, "simplify", true));
+          const filters = voiceFilters(
+            this.getNodeParameter("catalogOptions", index, {}),
+          );
           let after: string | null = null,
             remaining = limit;
           const seen = new Set<string>(),
             seenVoices = new Set<string>();
           do {
-            const query = new URLSearchParams({
-              limit: String(
+            const query = new URLSearchParams(filters);
+            query.set(
+              "limit",
+              String(
                 remaining === undefined
                   ? pageSize
                   : Math.min(pageSize, remaining),
               ),
-            });
+            );
             if (after) query.set("after", after);
             const page = listPage(
               (await request(this, "/v1/voices?" + query, { timeout })).body,
@@ -502,10 +534,12 @@ export class VoicelyV2 implements INodeType {
             pairedItem,
           });
         } else output.push({ json: asObject(reply.body), pairedItem });
-      } catch {
+      } catch (cause) {
+        const selectionError =
+          cause instanceof CatalogSelectionError ? cause.message : undefined;
         const error = new NodeOperationError(
           this.getNode(),
-          "Voicely operation could not complete",
+          selectionError ?? "Voicely operation could not complete",
           {
             itemIndex: index,
             description: usingWs
@@ -521,7 +555,7 @@ export class VoicelyV2 implements INodeType {
         if (!this.continueOnFail()) throw error;
         output.push({
           json: {
-            error: "Voicely operation could not complete",
+            error: selectionError ?? "Voicely operation could not complete",
             ...(!usingWs && operationId ? { operationId } : {}),
           },
           pairedItem: { item: index },
