@@ -74,3 +74,7 @@ The owner's pasted review is the exact requirements authority. Official guidance
 Detailed source before/after hashes: `review-evidence/SOURCE-CHANGES.json`. Reviewer-facing response draft: `REVIEW-RESPONSE.md`.
 
 Local checkpoint note: the first commit attempt found no author identity in the new clone; no commit was created. Repository-local identity was copied from the existing release repository (no global configuration change). Build logs retain all output with trailing blank lines normalized for Git whitespace checks.
+
+## Saved checkpoint
+
+Implementation/evidence commit: `1355d0e` (full source recovery parent: `be48a6e1aa2e1d67bf544fd0c16256d535afbace`). The reversible source patch is stored losslessly as `review-evidence/REVIEW-CORRECTIONS.patch.gz`; gzip avoids treating unified-diff context markers as source trailing whitespace. Documentation-only final checkpoint follows this implementation commit.
