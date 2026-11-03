@@ -78,3 +78,7 @@ Local checkpoint note: the first commit attempt found no author identity in the 
 ## Saved checkpoint
 
 Implementation/evidence commit: `1355d0e` (full source recovery parent: `be48a6e1aa2e1d67bf544fd0c16256d535afbace`). The reversible source patch is stored losslessly as `review-evidence/REVIEW-CORRECTIONS.patch.gz`; gzip avoids treating unified-diff context markers as source trailing whitespace. Documentation-only final checkpoint follows this implementation commit.
+
+## Later owner-UAT preparation — 2026-11-03
+
+A separate live review editor was subsequently started for owner-requested UAT on localhost5680, with the local0.2.1 tarball and fresh editor-only state. The old editor5678/package0.2.0 and all existing process identities remain unchanged. No credentials or workflows were copied. Earlier NOT INSTALLED status refers to the implementation checkpoint; the new review editor now has0.2.1. See `UAT-GUIDE.md` and runtime evidence in `/home/myeduprojects/n8n-nodes-voicely-review-v021-20261103T140631Z/uat-editor-20261103T143539Z`. Owner setup and authenticated UAT are pending; real HTTPS Trigger callback is not configured. First browser descriptor assertion encountered n8n-injected Custom API Call, then the harness was narrowly corrected to allow that known framework entry; no product source changed. No paid synthesis or production action occurred.
