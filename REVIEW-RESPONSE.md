@@ -1,12 +1,22 @@
-# n8n review response — local 0.2.1 candidate
+# n8n review response — version 0.2.1
 
-Prepared on 2026-11-03. Not yet published or resubmitted.
+Prepared on 2026-11-04. Publication and n8n verification are separate steps; this response is ready for the actual release record.
 
-1. **One regular node:** Removed the standalone Voicely Agents node from source and the package registration. Its Agent, Call, Delivery, Subscription and Tool resources are now part of Voicely Studio node version 2. The Voicely Agents Trigger remains a companion trigger. Existing Studio node version 1 behavior and credentials are unchanged.
-2. **Get Many parameters:** Removed Page Size. Voice, Agent, Delivery and Tool lists expose Return All and Limit. Paginated endpoints use an internal page size of 50, reduced when the remaining Limit is smaller. Agent discovery applies Limit to its nonpaginated response. Return All is not capped by the internal page size.
-3. **Options collections:** Operation Identity, Request Timeout, Include Shared Data and Include Setup Test Events now appear under Options, with appropriate resource/operation visibility. Other optional tool-policy, transport and simplification settings are also grouped. New explicit Options override legacy saved fields; an offline transformer documents the standalone-node migration.
-4. **Codex metadata:** `nodes/Voicely/Voicely.node.json` now uses `nodeVersion: "1.0"`, as specifically requested. This does not change runtime node versions 1 and 2.
+Thank you for reviewing version 0.2.0. Version 0.2.1 addresses all four findings:
 
-Validation: n8n-node CLI build and lint pass; all 161 offline regression cases pass (142 prior cases retained/adapted to the approved UI change, 19 additional review/migration cases). The local npm tarball contains two registered node entries, no standalone Agents payload and no external runtime dependencies. No live provider, financial or production request was made.
+1. **One regular node:** The package registers Voicely Studio and its companion Voicely Agents Trigger. Agent, Call, Delivery, Subscription and Tool operations are resources within Studio version 2. The standalone Agents regular node is removed. Saved Studio version 1 workflows retain their implementation and credentials.
+2. **Get Many parameters:** Page Size is removed from the node interface. Get Many exposes Return All and conditional Limit. Pagination is internal, respects the remaining limit and does not truncate Return All at the internal page size.
+3. **Options collections:** Operation Identity, Request Timeout, Include Shared Data and Trigger setup-event settings are inside Options. Explicit new settings take precedence, including false and zero. Legacy saved values have documented execution fallbacks; a pure offline migration helper handles the former standalone Agents node.
+4. **Codex metadata:** Both codex files use nodeVersion "1.0" as requested. Runtime Studio node versions 1 and 2 are unchanged.
 
-Publication and n8n verification remain separate approval steps. Existing 0.2.0 Agents workflows require the documented explicit migration before installing 0.2.1. V0.1.1-compatible saved V1 workflows do not require migration.
+## Validation
+
+The final compliance audit ran 236 offline connector regression cases: 236 passed, 0 failed, 0 skipped. The official n8n-node build and lint passed. The official scanner 0.42.0 local static analyzer passed on both the source and packed JavaScript/package.json. Eighteen independent package checks passed. The audited 67-file tarball was reproducible byte for byte before the final documentation-only release edits.
+
+The package has no external runtime dependencies, runtime environment/filesystem access, credential logging or security-rule suppression. Only n8n-workflow as a peer and built-in crypto are used by the node. Credentials stay in native n8n credentials. Source and release identity are pinned; saved V1, versioned canonical/legacy models, model-language-voice selection, custom-style boundaries, signed triggers, pagination and migration remain covered.
+
+The owner separately accepted end-to-end staging and production UAT against the matching Voicely Suite. This is owner manual acceptance, not complete provider certification. No automatic paid retry is added. Strict STT remains the default; explicitly selected Best Effort may return null invalid word times and visible quality warnings. Missing required speaker information still fails.
+
+The package is published through the test-gated GitHub Actions provenance workflow. Actual release commit, tag, Actions run, final artifact integrity and post-publication full registry/provenance scan are recorded in the release handoff. Local static analysis is not presented as completed registry provenance verification or n8n manual approval.
+
+Existing 0.2.0 standalone Agents workflows require the documented migration; existing V1 workflows do not. New streaming UI/output remains intentionally outside this update, while saved legacy WebSocket behavior remains supported.

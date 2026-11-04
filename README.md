@@ -97,7 +97,7 @@ Speech operations expose an operation identity. Reuse it only for the same inten
 
 The [workflow converter](migration/index.html) runs locally in your browser when served as static files. It reviews supported speech/voice mappings and produces a new inactive workflow; it does not upload your file or request a key. Map actual Voicely voice/model IDs, bind credentials privately, review the report and test before activation. Dynamic mappings require account-side configuration. It does not transfer private voices, balances or third-party permissions, and it is not a universal credential scrubber. Review custom code and linked workflows separately.
 
-Examples are available in this GitHub repository; they are not bundled inside the npm package. The migration utility is bundled.
+The npm package includes the model-language-voice discovery example and the migration utility. Other workflow examples are available in this GitHub repository.
 
 ## Upgrading workflows created with package 0.2.0
 

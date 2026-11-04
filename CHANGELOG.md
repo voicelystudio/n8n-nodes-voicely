@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.1 (2026-11-03) — review-correction candidate
+## 0.2.1 (2026-11-04) — review corrections and workflow improvements
 
 - Add explicit API-consistent `/v2` TTS selection and streaming metadata while preserving original `/v1` Suite mappings and saved Legacy Model keys.
 - Add Model Get Many, operation/model-filtered Voice Get Many, model-first speech options ordering and saved-workflow compatibility; preserve service-authoritative routing and voice selection.
