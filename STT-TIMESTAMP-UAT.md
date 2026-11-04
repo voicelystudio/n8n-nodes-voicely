@@ -1,0 +1,5 @@
+# STT timestamp handling
+
+Speech → Speech to Text → Additional Options → Timestamp Handling. Missing option and Strict preserve the old timing requirement. Choose Best Effort explicitly for text workflows that accept missing word timings. Normal STT usage applies to an accepted result. A partial result preserves transcript/words, returns null start/end only on eligible invalid timings, and includes word_timing_complete:false, word_timing_invalid_count and warnings. Downstream IF can branch on word_timing_complete equals false; missing field means no partial warning, not acoustic correctness certification. Never generate subtitles from null times. Diarize and language settings remain unchanged.
+
+No automatic retry, provider fallback or synthesis. Strict invalid response produces an actionable error after durable known-failure settlement. Connection/commit uncertainty remains separately protected. Existing uncertain operations are not automatically refunded. Backend feature must be enabled on the selected staging service; production remains unchanged.

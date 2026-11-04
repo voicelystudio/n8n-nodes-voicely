@@ -50,3 +50,10 @@
 - Optional Custom Style Instructions for six supported canonical TTS models; HD and incompatible operations reject nonempty instructions.
 - Preserve empty-style requests, existing usage units and request identity semantics.
 - Defer new streaming UI/output scope; preserve saved WebSocket compatibility internally.
+
+### 0.2.1 staging refinement — explicit STT timestamp handling
+
+- Add optional Strict/Best Effort timestamp handling for STT inside Additional Options. Missing saved values remain Strict.
+- Preserve every word in opted-in partial results; unsupported word times are null and quality warnings remain visible in JSON.
+- Keep provider/model/language/diarization and legacy request identity behavior unchanged. Normal STT usage applies to an accepted best-effort result.
+- Surface only fixed safe STT error explanations; no raw helper errors, automatic retries or public publication.
