@@ -29,7 +29,7 @@ Sign in to [Voicely API access](https://tryvoicely.com/api-access), create an AP
 | **Voicely Agents API** | `https://n8n-suite.tryvoicely.com` | Studio v2 Agent/Call/Delivery/Subscription/Tool resources and Agents Trigger |
 | **Voicely API** | `https://n8n.tryvoicely.com` | Existing node version 1 workflows |
 
-Staging accounts and keys belong to their staging service; do not mix environments. Existing speech keys do not automatically gain agent, tool or automation permissions.
+Use keys from the account that owns the workflow. Existing speech keys do not automatically gain agent, tool or automation permissions.
 
 Common permissions are `credential/read` for the Studio credential test, `voices/read` and `catalog/read` for discovery, `speech/synthesize`, `speech/transcribe` or `speech/convert` for the matching speech operation, and `voices/write` for owned-profile creation/deletion. Agents discovery uses `agents/read`; completed calls use `calls/read`; subscriptions and delivery management use `automation/read` and `automation/write`; tool management uses `tools/read` and `tools/write`. Additional shared-call details require their matching scopes and recorded sharing permission.
 
@@ -121,8 +121,8 @@ This connector is MIT licensed; see [LICENSE.md](LICENSE.md). Hosted Voicely ser
 
 ## Model, language and voice discovery
 
-Use dependent selectors within Generate Speech; separate discovery nodes are optional. See [Model → Language → Voice staging guide](MODEL-LANGUAGE-VOICE-UAT.md) for canonical versus saved legacy selections, compact catalog output and streaming limitations.
+Use dependent selectors within Generate Speech; separate discovery nodes are optional. Saved workflows keep their earlier selections, and catalog output stays compact by default.
 
 ## Custom style instructions
 
-Select a canonical TTS **Model**, then add **Custom Style Instructions** under **Model and Speech Options**. Six models accept natural-language delivery instructions over HTTP; Voicely HD does not. Keep the spoken script in Text. Empty style preserves normal delivery. After switching to HD, clear a retained style; manual or expression combinations are validated before submission. Do not use STS Custom Style Strength or numeric voice_settings.style as a substitute. See [Custom Style UAT](CUSTOM-STYLE-UAT.md).
+Select a canonical TTS **Model**, then add **Custom Style Instructions** under **Model and Speech Options**. Six models accept natural-language delivery instructions over HTTP; Voicely HD does not. Keep the spoken script in Text. Empty style preserves normal delivery. After switching to HD, clear a retained style; manual or expression combinations are validated before submission. Do not use STS Custom Style Strength or numeric voice_settings.style as a substitute.

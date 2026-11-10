@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.1 (2026-11-04) — review corrections and workflow improvements
+## 0.2.1 (2026-11-04): review corrections and workflow improvements
 
 - Add explicit API-consistent `/v2` TTS selection and streaming metadata while preserving original `/v1` Suite mappings and saved Legacy Model keys.
 - Add Model Get Many, operation/model-filtered Voice Get Many, model-first speech options ordering and saved-workflow compatibility; preserve service-authoritative routing and voice selection.
@@ -38,20 +38,20 @@
 - Indexed validation errors for empty or non-string workflow expressions before any paid submission.
 - Importable HTTP and WebSocket workflow examples and test-gated provenance publication workflow.
 
-### 0.2.1 staging refinement — model/language/voice
+### 0.2.1 refinement: model/language/voice
 
 - Compact model discovery with optional detailed output.
 - Model-specific Language Get Many and searchable TTS language selection.
 - Voice discovery validates selected model and language; preserve legacy saved fields and routing.
 - No new regular node, Page Size parameter, runtime dependencies or publication.
 
-### 0.2.1 staging refinement — HTTP custom style
+### 0.2.1 refinement: HTTP custom style
 
 - Optional Custom Style Instructions for six supported canonical TTS models; HD and incompatible operations reject nonempty instructions.
 - Preserve empty-style requests, existing usage units and request identity semantics.
 - Defer new streaming UI/output scope; preserve saved WebSocket compatibility internally.
 
-### 0.2.1 staging refinement — explicit STT timestamp handling
+### 0.2.1 refinement: explicit STT timestamp handling
 
 - Add optional Strict/Best Effort timestamp handling for STT inside Additional Options. Missing saved values remain Strict.
 - Preserve every word in opted-in partial results; unsupported word times are null and quality warnings remain visible in JSON.
