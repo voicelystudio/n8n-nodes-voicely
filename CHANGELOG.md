@@ -9,7 +9,7 @@
 - Remove Page Size from Get Many; keep Return All/Limit and internal pagination, including agent-list limits.
 - Move optional request identity, timeout, shared-call data, tool policy, transport and simplification settings into Options, with saved-value execution fallbacks and an explicit offline 0.2.0 migration helper.
 - Move Trigger timeout and setup-event settings into Options.
-- Set Studio codex metadata nodeVersion to 1.0 per reviewer; runtime node versions 1 and 2 remain unchanged.
+- Set the Studio node metadata version to 1.0 as requested in the n8n review; runtime node versions 1 and 2 remain unchanged.
 - Add focused structural, pagination, credential, option-precedence and workflow-migration regression coverage. No live-service or provider change.
 
 ## 0.2.0 (2026-10-30)
