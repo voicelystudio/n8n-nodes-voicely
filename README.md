@@ -1,5 +1,7 @@
 # Voicely Studio and Agents for n8n
 
+**Verified n8n community node.** Find it in the official n8n integrations directory: [n8n.io/integrations/voicely](https://n8n.io/integrations/voicely/)
+
 Create speech, transcribe recordings, convert voices, and connect Voicely Calling Agents to business workflows.
 
 `@voicelystudio/n8n-nodes-voicely` contains one regular node and one companion trigger:

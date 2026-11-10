@@ -1,6 +1,0 @@
-{
-  "firstLint": "stopped after >2min: mistakenly traversed live editor generated JS cache under repository",
-  "applicationFailure": false,
-  "remedy": "standard CLI lint on exact package-source verification snapshot, outside live runtime tree",
-  "rulesDisabled": false
-}
