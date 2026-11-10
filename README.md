@@ -9,11 +9,11 @@ Create speech, transcribe recordings, convert voices, and connect Voicely Callin
 | **Voicely Studio** | Model discovery and Speech/Voice resources handle HTTP TTS, STT, STS and consented voice profiles. Agent, Call, Delivery, Subscription and Tool resources handle discovery, permitted call details, tool registration and automation events. Audio output remains binary data. |
 | **Voicely Agents Trigger** | Receive authenticated, signed completed-call events for post-call workflows. |
 
-[Voicely integration guide](https://tryvoicely.com/integrations/n8n) · [Account and API access](https://tryvoicely.com/api-access)
+[Voicely on the official n8n integrations directory](https://n8n.io/integrations/voicely/) · [Voicely integration guide](https://tryvoicely.com/integrations/n8n) · [Account and API access](https://tryvoicely.com/api-access)
 
 ## Installation and upgrades
 
-For a self-hosted n8n instance, install `@voicelystudio/n8n-nodes-voicely` from **Settings → Community nodes**, following your administrator's package policy. n8n Cloud availability follows n8n's review and release process. Version 0.1.1 was verified; its status does not automatically certify the expanded features. Version 0.2.1 is a review-correction candidate until separately published and approved.
+For a self-hosted n8n instance, install `@voicelystudio/n8n-nodes-voicely` from **Settings → Community nodes**, following your administrator's package policy. n8n Cloud availability follows n8n's review and release process. Version 0.2.1 is the current n8n-verified release, listed in the [official n8n integrations directory](https://n8n.io/integrations/voicely/).
 
 Version 0.2.0 retains the original `voicely` node identity. Saved node version 1 workflows keep their original operations, **Voicely API** credentials and service URLs. Fresh Studio nodes use node version 2. Package version 0.2.1 and Studio node version 2 are different version numbers. Updating the package does not convert workflows, move credentials between hosts or transfer balances.
 
